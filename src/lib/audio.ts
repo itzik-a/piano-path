@@ -1,5 +1,7 @@
 /* Web Audio helpers. iOS only allows audio after a user tap, so every entry
-   point that may play sound calls ensureCtx() from inside a tap handler. */
+   point that may play sound calls ensureCtx() from inside a tap handler.
+   iOS also mutes web audio when the phone is on Silent, unless the page asks
+   for a "playback" audio session (Safari 16.4+), as a music app would. */
 
 let ctx: AudioContext | null = null;
 
@@ -8,9 +10,12 @@ export function ensureCtx(): AudioContext | null {
     if (!ctx) {
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AC) return null;
+      const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+      if (session) session.type = "playback";
       ctx = new AC();
     }
-    if (ctx.state === "suspended") void ctx.resume();
+    // "suspended" before the first tap; "interrupted" on iOS after a call or Siri.
+    if (ctx.state !== "running") void ctx.resume();
   } catch {
     return null;
   }
