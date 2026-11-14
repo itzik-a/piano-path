@@ -21,8 +21,9 @@ Vite + React 19 + TypeScript. Node 22 (`.nvmrc`; on this Mac use `nvm use`). `np
 - `src/data/curriculum.ts`: `KEYS`, `STAGES`, `MAINTAIN`. Each stage item has `id`, `c` (T = technique, E = étude, R = repertoire, H = theory, S = sight-reading), `t` (title), optional `d` (practice tip) and optional `q` (IMSLP search query).
 - **Never rename or reuse an item `id`**: saved progress is keyed by id. Add new ids instead.
 - `src/state/store.ts`: the single app state, `useAppState()` hook, `update(fn)` for changes, `replaceState()` for sync. `src/state/actions.ts`: every state change goes through here.
-- State shape (unchanged from v1): `{settings:{minutes,stage}, arps:{C:"solid"|"learning"|"none",...}, scales:{C:{maj,nat,harm,mel}}, checks:{id:true}, log:[{d,min,note,items,ts}], today, updatedAt}`.
-- Saving: `localStorage` key `pianoPath.v1` (per device). Cross-device sync via Firebase is the next step. Metronome tempo and beats are kept separately in `pianoPath.metronome`.
+- State shape: `{settings:{minutes,stage}, arps:{C:"solid"|"learning"|"none",...}, scales:{C:{maj,nat,harm,mel}}, checks:{id:true}, log:[{d,min,note,items,ts}], logDeleted:[ts], today, updatedAt}`. New fields must be optional in `normalize()` so older saved copies still load.
+- Saving: always `localStorage` key `pianoPath.v1` first. Metronome tempo and beats are kept separately in `pianoPath.metronome` (not synced).
+- Sync (`src/state/sync.ts`): one private GitHub Gist with file `piano-path.json`, found by filename or created on first connect. The token (classic, `gist` scope) is pasted per device in the sync sheet and kept in `localStorage` key `pianoPath.gist`; never put it in code. Merge rule: `log` is the union by `ts` minus `logDeleted`; everything else comes from the copy with the newer `updatedAt`. Syncs on start, 2 s after a local change, on return to the app, on reconnect, and every 2 min while visible.
 - `src/lib/plan.ts`: `todaysPlan()` builds the daily plan. `src/lib/timer.ts`: block timer (memory only). `src/lib/audio.ts`: Web Audio click and chime.
 - `src/views/`: Today, Path, Technique, Log. `src/components/`: Metronome, icons, small UI pieces. Routing is the URL hash (`#today`, `#path`, `#technique`, `#log`).
 - Styling: plain CSS in `src/styles.css` with design tokens in `:root`.
@@ -41,6 +42,6 @@ GitHub Actions (`.github/workflows/deploy.yml`) builds and publishes to GitHub P
 ## Ideas backlog
 
 - Export/import progress as JSON (to move progress between devices without a backend).
-- Cross-device sync with Firebase (Firestore + Google sign-in, offline cache; merge `log` by `ts` and union `checks`).
+- Live sync with Firebase (Firestore) if gist sync ever feels too slow; only `src/state/sync.ts` would change.
 - Notation for short exercises with abcjs.
 - A weekly review that reads the log and suggests what to change.

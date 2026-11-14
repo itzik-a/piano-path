@@ -4,6 +4,7 @@ import { Path } from "./views/Path";
 import { Technique } from "./views/Technique";
 import { Log, type LogPrefill } from "./views/Log";
 import { Metronome } from "./components/Metronome";
+import { SyncPill, SyncSheet } from "./components/SyncSheet";
 import { IconKeys, IconLog, IconPath, IconToday } from "./components/Icons";
 
 type View = "today" | "path" | "technique" | "log";
@@ -21,6 +22,7 @@ const readHash = (): View => {
 
 export function App() {
   const [view, setView] = useState<View>(readHash);
+  const [syncOpen, setSyncOpen] = useState(false);
   const [prefill, setPrefill] = useState<{ n: number; p: LogPrefill } | null>(null);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export function App() {
               <a key={t.id} href={`#${t.id}`} aria-current={view === t.id ? "page" : undefined}>{t.label}</a>
             ))}
           </nav>
-          <div className="sync" role="status"><span className="dot" />On this device</div>
+          <SyncPill onOpen={() => setSyncOpen(true)} />
         </div>
       </header>
 
@@ -56,6 +58,7 @@ export function App() {
       </main>
 
       <Metronome />
+      {syncOpen && <SyncSheet onClose={() => setSyncOpen(false)} />}
 
       <nav className="tabbar" aria-label="Sections">
         {TABS.map(({ id, label, Icon }) => (

@@ -1,6 +1,6 @@
 /* App state: one object, saved to localStorage on every change.
    Shape is unchanged from v1, so progress saved by the old page loads as-is.
-   Sync (Firebase, coming next) will hook in via `subscribe` + `replaceState`. */
+   Sync (src/state/sync.ts) listens via `onLocalChange` and writes back via `replaceState`. */
 import { useSyncExternalStore } from "react";
 import { KEYS } from "../data/curriculum";
 
@@ -23,6 +23,8 @@ export interface AppState {
   scales: Record<string, Record<ScaleForm, number>>;
   checks: Record<string, boolean>;
   log: LogEntry[];
+  /** `ts` of deleted log entries, so a delete on one device sticks after sync */
+  logDeleted: number[];
   today: { date: string; done: Record<string, boolean> } | null;
   updatedAt: number;
 }
@@ -38,7 +40,7 @@ export function defaults(): AppState {
     arps[o.k] = i < 6 ? "solid" : "none";
     scales[o.k] = { maj: 95, nat: 95, harm: 0, mel: 0 };
   });
-  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, log: [], today: null, updatedAt: 0 };
+  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, log: [], logDeleted: [], today: null, updatedAt: 0 };
 }
 
 export function normalize(s: unknown): AppState {
@@ -52,6 +54,7 @@ export function normalize(s: unknown): AppState {
     scales: { ...d.scales, ...(x.scales || {}) },
     checks: x.checks || {},
     log: Array.isArray(x.log) ? x.log : [],
+    logDeleted: Array.isArray(x.logDeleted) ? x.logDeleted : [],
     today: x.today || null,
     updatedAt: x.updatedAt || 0,
   };
@@ -67,6 +70,7 @@ function load(): AppState {
 
 let state: AppState = load();
 const listeners = new Set<() => void>();
+const localListeners = new Set<() => void>();
 
 function emit() { listeners.forEach((l) => l()); }
 function saveLocal() {
@@ -88,6 +92,13 @@ export function update(fn: (draft: AppState) => void) {
   state = next;
   saveLocal();
   emit();
+  localListeners.forEach((l) => l());
+}
+
+/** Called after changes made on this device (not after sync replaces state). */
+export function onLocalChange(l: () => void) {
+  localListeners.add(l);
+  return () => { localListeners.delete(l); };
 }
 
 /** Replace state wholesale (used by sync when a newer copy arrives). */

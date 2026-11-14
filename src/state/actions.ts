@@ -39,5 +39,8 @@ export function addLog(entry: { d: string; min: number; note: string; items: str
 }
 
 export function deleteLog(ts: number) {
-  update((s) => { s.log = s.log.filter((e) => e.ts !== ts); });
+  update((s) => {
+    s.log = s.log.filter((e) => e.ts !== ts);
+    s.logDeleted = [...s.logDeleted, ts].slice(-500);
+  });
 }
