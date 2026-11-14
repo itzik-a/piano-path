@@ -3,8 +3,6 @@ import { todayStr, useAppState } from "../state/store";
 import { addLog, deleteLog } from "../state/actions";
 import { IconTrash } from "../components/Icons";
 
-export interface LogPrefill { min: number; items: string }
-
 function Chart({ days }: { days: { k: string; v: number; l: string }[] }) {
   const max = Math.max(60, ...days.map((d) => d.v));
   const CW = 420, CH = 140, GUTTER = 26, bw = (CW - GUTTER) / days.length;
@@ -34,10 +32,10 @@ function Chart({ days }: { days: { k: string; v: number; l: string }[] }) {
   );
 }
 
-export function Log({ prefill, clearPrefill }: { prefill: LogPrefill | null; clearPrefill: () => void }) {
+export function Log() {
   const state = useAppState();
   const [date, setDate] = useState(todayStr());
-  const [min, setMin] = useState(String(prefill?.min || state.settings.minutes));
+  const [min, setMin] = useState(String(state.settings.minutes));
   const [note, setNote] = useState("");
 
   const byDay: Record<string, number> = {};
@@ -57,14 +55,13 @@ export function Log({ prefill, clearPrefill }: { prefill: LogPrefill | null; cle
   }
   const week = days.slice(7).reduce((a, b) => a + b.v, 0);
   const total = state.log.reduce((a, e) => a + (+e.min || 0), 0);
-  const sorted = state.log.slice().sort((a, b) => b.d.localeCompare(a.d) || (b.ts || 0) - (a.ts || 0));
+  const sorted = state.log.filter((e) => !e.auto || e.min || e.items).slice().sort((a, b) => b.d.localeCompare(a.d) || (b.ts || 0) - (a.ts || 0));
 
   function submit(ev: FormEvent) {
     ev.preventDefault();
-    addLog({ d: date || todayStr(), min: Math.max(1, parseInt(min, 10) || 0), note: note.trim(), items: prefill?.items || "" });
+    addLog({ d: date || todayStr(), min: Math.max(1, parseInt(min, 10) || 0), note: note.trim(), items: "" });
     setNote("");
     setMin(String(state.settings.minutes));
-    clearPrefill();
   }
 
   return (
@@ -86,7 +83,7 @@ export function Log({ prefill, clearPrefill }: { prefill: LogPrefill | null; cle
 
       <section className="card">
         <h2>Add a session</h2>
-        {prefill?.items && <p className="prefill"><span className="eyebrow">From today's plan</span>{prefill.items}</p>}
+        <p className="muted small">Ticks on Today are logged automatically. Use this for practice outside the plan.</p>
         <form className="form" onSubmit={submit}>
           <div className="form-row">
             <label>Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></label>
@@ -118,7 +115,7 @@ export function Log({ prefill, clearPrefill }: { prefill: LogPrefill | null; cle
             ))}
           </ul>
         ) : (
-          <p className="muted small">No sessions yet. Finish today's plan and press Log this session, or add one above.</p>
+          <p className="muted small">No sessions yet. Tick items on Today and they appear here, or add one above.</p>
         )}
       </section>
     </>

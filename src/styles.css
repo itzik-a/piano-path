@@ -424,7 +424,6 @@ button { cursor: pointer; }
 .stat span { font-size: .75rem; color: var(--muted); font-weight: 500; }
 .chart { width: 100%; height: auto; display: block; }
 .chart text { font-variant-numeric: tabular-nums; font-family: var(--font); }
-.prefill { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); font-size: .86rem; }
 .form { display: grid; gap: 12px; }
 .form-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
 label { display: grid; gap: 6px; font-size: .8rem; font-weight: 600; color: var(--muted); }

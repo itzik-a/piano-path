@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import { Today } from "./views/Today";
 import { Path } from "./views/Path";
 import { Technique } from "./views/Technique";
-import { Log, type LogPrefill } from "./views/Log";
+import { Log } from "./views/Log";
 import { Metronome } from "./components/Metronome";
 import { SyncPill, SyncSheet } from "./components/SyncSheet";
 import { IconKeys, IconLog, IconPath, IconToday } from "./components/Icons";
@@ -23,7 +23,6 @@ const readHash = (): View => {
 export function App() {
   const [view, setView] = useState<View>(readHash);
   const [syncOpen, setSyncOpen] = useState(false);
-  const [prefill, setPrefill] = useState<{ n: number; p: LogPrefill } | null>(null);
 
   useEffect(() => {
     const on = () => { setView(readHash()); window.scrollTo(0, 0); };
@@ -51,10 +50,10 @@ export function App() {
       </header>
 
       <main className="wrap main" key={view}>
-        {view === "today" && <Today onLog={(p) => { setPrefill((x) => ({ n: (x?.n || 0) + 1, p })); go("log"); }} />}
+        {view === "today" && <Today />}
         {view === "path" && <Path go={go} />}
         {view === "technique" && <Technique />}
-        {view === "log" && <Log key={prefill?.n || 0} prefill={prefill?.p || null} clearPrefill={() => setPrefill(null)} />}
+        {view === "log" && <Log />}
       </main>
 
       <Metronome />

@@ -1,4 +1,5 @@
-import { LAST_STEP } from "../data/curriculum";
+import { KEYS, LAST_STEP, pretty } from "../data/curriculum";
+import { todaysPlan } from "../lib/plan";
 import { update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
 
 export const setMinutes = (m: number) => update((s) => { s.settings.minutes = m; });
@@ -11,6 +12,7 @@ export function markBlock(id: string, done: boolean) {
     if (!s.today || s.today.date !== d) s.today = { date: d, done: {} };
     if (done) s.today.done[id] = true;
     else delete s.today.done[id];
+    autoLog(s);
   });
 }
 
@@ -78,6 +80,7 @@ export function setKeysDone(rot: Rot, keys: string[], done: boolean, todayKeys: 
     const id = rot === "scale" ? "warm" : "arp";
     if (todayKeys.every((k) => day[rot].includes(k))) s.today.done[id] = true;
     else delete s.today.done[id];
+    autoLog(s);
   });
 }
 
@@ -89,4 +92,33 @@ function rollRotation(s: AppState, d: string) {
     (["scale", "arp"] as Rot[]).forEach((r) => day[r].forEach((k) => { s.rot.n[r][k] = (s.rot.n[r][k] || 0) + 1; }));
   }
   s.rot.day = { d, scale: [], arp: [] };
+}
+
+/** Keep today's automatic log entry in step with what's ticked on Today: one entry per day,
+    with a `ts` fixed by the date so every device updates the same entry when syncing. */
+function autoLog(s: AppState) {
+  const d = todayStr();
+  const done = s.today?.date === d ? s.today.done : {};
+  const day = s.rot.day?.d === d ? s.rot.day : null;
+  const { blocks } = todaysPlan(s);
+  const parts: string[] = [];
+  let min = 0;
+  for (const b of blocks) {
+    if (b.rot && b.keys) {
+      const keys = b.keys.filter((k) => day?.[b.rot!].includes(k));
+      if (!keys.length) continue;
+      min += (b.min * keys.length) / b.keys.length;
+      const names = keys.map((k) => b.rot === "scale" ? `${pretty(k)} major / ${KEYS.find((o) => o.k === k)!.m} minor` : pretty(k));
+      parts.push(`${b.cat}: ${names.join(", ")}`);
+    } else if (done[b.id]) {
+      min += b.min;
+      parts.push(`${b.cat}: ${b.ttl}`);
+    }
+  }
+  let ts = Date.parse(d + "T00:00:00Z");
+  while (s.logDeleted.includes(ts)) ts++; // deleted earlier today: start a fresh entry
+  const entry = { d, min: Math.round(min), note: "", items: parts.join(" · "), ts, auto: true };
+  const i = s.log.findIndex((e) => e.ts === ts);
+  if (i >= 0) s.log[i] = { ...s.log[i], min: entry.min, items: entry.items };
+  else if (parts.length) s.log.push(entry);
 }

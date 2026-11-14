@@ -14,6 +14,8 @@ export interface LogEntry {
   note: string;
   items: string;
   ts: number;
+  /** filled in automatically from Today's ticks (one per day) */
+  auto?: boolean;
 }
 
 export interface PieceProgress {

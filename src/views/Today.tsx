@@ -11,7 +11,7 @@ import { KEYS, pretty } from "../data/curriculum";
 import { enharmonic, keyScales } from "../lib/arpeggios";
 import type { AppState } from "../state/store";
 
-export function Today({ onLog }: { onLog: (prefill: { min: number; items: string }) => void }) {
+export function Today() {
   const state = useAppState();
   const timer = useTimer();
   const [showForms, setShowForms] = useState<string | null>(null);
@@ -101,19 +101,13 @@ export function Today({ onLog }: { onLog: (prefill: { min: number; items: string
           })}
         </ol>
 
-        <button
-          type="button"
-          className="btn primary block-btn"
-          onClick={() => onLog({ min: doneMin || total, items: blocks.filter((b) => done[b.id]).map((b) => b.ttl).join(" · ") })}
-        >
-          Log this session
-        </button>
       </section>
 
       <p className="footnote">
         Scales and arpeggios cover two keys a day around the circle of fifths (C, G, D, … F). Tick each key when you finish it; a key
         you don't tick comes up first the next day, so none is skipped. Melodic minor shows the way up and comes down natural. The étude and new piece are the first unchecked items in your
-        current stage, so ticking them off on the Path tab moves today's plan forward. (The étude is hidden for now.)
+        current stage, so ticking them off on the Path tab moves today's plan forward. (The étude is hidden for now.) Everything you tick
+        is added to today's entry in the Log automatically.
       </p>
     </>
   );
