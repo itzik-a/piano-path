@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { CAT, MAINTAIN, STAGES, imslp, type Category } from "../data/curriculum";
+import { CAT, STAGES, imslp, maintained, type Category } from "../data/curriculum";
 import { useAppState } from "../state/store";
-import { setStage, toggleItem } from "../state/actions";
+import { setStage, toggleItem, togglePiece } from "../state/actions";
+import { PieceProgress } from "../components/PieceProgress";
 import { stageProgress } from "../lib/plan";
 import { Bar, Check } from "../components/ui";
 import { IconChevron, IconExternal } from "../components/Icons";
@@ -11,6 +12,7 @@ const ORDER: Category[] = ["T", "E", "R", "H", "S"];
 export function Path({ go }: { go: (v: string) => void }) {
   const state = useAppState();
   const cur = state.settings.stage;
+  const keep = maintained(state.checks);
   const [open, setOpen] = useState<Record<number, boolean>>({ [cur]: true });
 
   return (
@@ -60,14 +62,24 @@ export function Path({ go }: { go: (v: string) => void }) {
                         <ul className="items">
                           {its.map((i) => (
                             <li key={i.id} className={`item ${state.checks[i.id] ? "on" : ""}`}>
-                              <Check checked={!!state.checks[i.id]} label={`Done: ${i.t}`} onToggle={() => toggleItem(i.id)} />
+                              <Check checked={!!state.checks[i.id]} label={`Done: ${i.t}`} onToggle={() => (i.c === "R" ? togglePiece(i.id, !!state.checks[i.id]) : toggleItem(i.id))} />
                               <div>
                                 <div className="item-title">{i.t}</div>
                                 {i.d && <p className="item-detail">{i.d}</p>}
+                                {i.c === "R" && <PieceProgress id={i.id} title={i.t} />}
                                 {i.q && (
                                   <a className="link" href={imslp(i.q)} target="_blank" rel="noopener">
                                     Free score on IMSLP <IconExternal />
                                   </a>
+                                )}
+                                {i.links && (
+                                  <ul className="links">
+                                    {i.links.map((l) => (
+                                      <li key={l.url}>
+                                        <a className="link" href={l.url} target="_blank" rel="noopener">{l.l} <IconExternal /></a>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 )}
                               </div>
                             </li>
@@ -94,11 +106,11 @@ export function Path({ go }: { go: (v: string) => void }) {
       <section className="card">
         <h2>Always in your hands</h2>
         <ul className="items">
-          {MAINTAIN.map((m) => (
+          {keep.map((m) => (
             <li key={m.t} className="item plain">
               <div>
                 <div className="item-title">{m.t}</div>
-                <p className="item-detail">Played on alternate days in the Keep up block.</p>
+                <p className="item-detail">{keep.length > 1 ? `One of ${keep.length} pieces that take turns, a different one each day,` : "Played every day"} in the Keep up block.</p>
               </div>
             </li>
           ))}

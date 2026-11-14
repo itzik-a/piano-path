@@ -5,7 +5,7 @@ A personal piano practice web app (React, built with Vite, hosted on GitHub Page
 ## About me (the pianist)
 
 - Level: late beginner / early intermediate.
-- Repertoire I play: Chopin Waltz in A minor, B. 150; Chopin Waltz in B minor, Op. 69 No. 2.
+- Repertoire I play: Chopin Waltz in A minor, B. 150. Still learning: Chopin Waltz in B minor, Op. 69 No. 2 (stage item `s1r0`; it joins Keep up once checked).
 - Scales: all major scales and their relative natural minors, hands together, at 95 bpm.
 - Not yet learned: harmonic and melodic minor.
 - Russian arpeggio set (11 forms per key): solid in C, G, D, A, E, B. Still to learn: F, F#, Db, Ab, Eb, Bb.
@@ -16,12 +16,13 @@ When suggesting repertoire, use real pieces with correct catalogue numbers (Op.,
 
 ## How the site is built
 
-Vite + React 19 + TypeScript. Node 22 (`.nvmrc`; on this Mac use `nvm use`). `npm run dev` for a local server (also reachable from the iPad/iPhone on the same Wi-Fi), `npm run build` to typecheck and build into `dist/`.
+Vite + React 19 + TypeScript. Node 22 (`.nvmrc`). On this Mac `npm start` runs `nvm use` and then the dev server; `npm run dev` alone runs the local server (also reachable from the iPad/iPhone on the same Wi-Fi), `npm run build` to typecheck and build into `dist/`.
 
-- `src/data/curriculum.ts`: `KEYS`, `STAGES`, `MAINTAIN`. Each stage item has `id`, `c` (T = technique, E = étude, R = repertoire, H = theory, S = sight-reading), `t` (title), optional `d` (practice tip) and optional `q` (IMSLP search query).
+- `src/data/curriculum.ts`: `KEYS`, `STAGES`, `MAINTAIN`. Each stage item has `id`, `c` (T = technique, E = étude, R = repertoire, H = theory, S = sight-reading), `t` (title), optional `d` (practice tip), optional `q` (exact IMSLP page title, e.g. "Preludes, Op.28 (Chopin, Frédéric)"; IMSLP search URLs land on a bot check, so link pages, not searches) and optional `links` (free sheet-music links, used on sight-reading items and shown in Today's sight-reading block). Repertoire items can have `keep` (the title shown in Keep up once finished).
+- Pieces: each repertoire item has a learning step (`PIECE_STEPS` in `curriculum.ts`, 5 steps) and an optional "working on bars" note, in state `pieces`. Reaching the last step checks the item; going back un-checks it. Today's New piece tip follows the step. Keep up rotates (one a day) through `MAINTAIN` plus every checked repertoire item (`maintained()`).
 - **Never rename or reuse an item `id`**: saved progress is keyed by id. Add new ids instead.
 - `src/state/store.ts`: the single app state, `useAppState()` hook, `update(fn)` for changes, `replaceState()` for sync. `src/state/actions.ts`: every state change goes through here.
-- State shape: `{settings:{minutes,stage}, arps:{C:"solid"|"learning"|"none",...}, scales:{C:{maj,nat,harm,mel}}, checks:{id:true}, log:[{d,min,note,items,ts}], logDeleted:[ts], today, updatedAt}`. New fields must be optional in `normalize()` so older saved copies still load.
+- State shape: `{settings:{minutes,stage}, arps:{C:"solid"|"learning"|"none",...}, scales:{C:{maj,nat,harm,mel}}, checks:{id:true}, fingerings:{"A:3":"..."}, pieces:{id:{step,bars?}}, log:[{d,min,note,items,ts}], logDeleted:[ts], today, updatedAt}`. New fields must be optional in `normalize()` so older saved copies still load.
 - Saving: always `localStorage` key `pianoPath.v1` first. Metronome tempo and beats are kept separately in `pianoPath.metronome` (not synced).
 - Sync (`src/state/sync.ts`): one private GitHub Gist with file `piano-path.json`, found by filename or created on first connect. The token (classic, `gist` scope) is pasted per device in the sync sheet and kept in `localStorage` key `pianoPath.gist`; never put it in code. Merge rule: `log` is the union by `ts` minus `logDeleted`; everything else comes from the copy with the newer `updatedAt`. Syncs on start, 2 s after a local change, on return to the app, on reconnect, and every 2 min while visible.
 - `src/lib/arpeggios.ts`: the 11 Russian arpeggio forms as intervals; notes are spelled by letter + semitones (correct ♯/♭/𝄫), with `enharmonic()` for unusual spellings. `DEFAULT_FINGERINGS` holds the ones I supplied; my edits are in state `fingerings` ("RH : LH", ascending) and override them. Shown on Technique (key picker) and in Today's arpeggio block.

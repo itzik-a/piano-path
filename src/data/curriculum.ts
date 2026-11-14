@@ -9,8 +9,18 @@ export interface Item {
   t: string;
   /** practice tip */
   d?: string;
-  /** IMSLP search query */
+  /** IMSLP page title, e.g. "Preludes, Op.28 (Chopin, Frédéric)" (search URLs hit a bot check) */
   q?: string;
+  /** free sheet-music links (used for sight-reading) */
+  links?: Link[];
+  /** repertoire: title in Keep up once finished (defaults to `t`) */
+  keep?: string;
+}
+
+export interface Link {
+  /** label */
+  l: string;
+  url: string;
 }
 
 export interface Stage {
@@ -38,7 +48,9 @@ export const KEYS: KeyInfo[] = [
 export const NEW_ARP_ORDER = ["F", "F#", "Db", "Ab", "Eb", "Bb"];
 
 export const pretty = (k: string) => k.replace("#", "♯").replace(/^([A-G])b$/, "$1♭");
-export const imslp = (q: string) => "https://imslp.org/index.php?search=" + encodeURIComponent(q);
+export const imslp = (page: string) => "https://imslp.org/wiki/" + encodeURI(page.replace(/ /g, "_"));
+const im = (l: string, q: string): Link => ({ l, url: imslp(q) });
+const MUTOPIA: Link = { l: "Mutopia Project: free scores", url: "https://www.mutopiaproject.org/" };
 
 export const CAT: Record<Category, string> = {
   T: "Technique", E: "Études", R: "Repertoire", H: "Theory", S: "Sight-reading",
@@ -55,15 +67,21 @@ export const STAGES: Stage[] = [
       { id: "s1t3", c: "T", t: "Harmonic minor, all 12 keys, 80 then 95", d: "You already have the natural minors: raise the 7th." },
       { id: "s1t4", c: "T", t: "Melodic minor, all 12 keys, at 80", d: "Raised 6th and 7th going up, natural minor coming down." },
       { id: "s1t5", c: "T", t: "Chromatic scale, hands together, 2 octaves", d: "Fingering 1-3 on black-and-white pairs, 1-2 on E–F and B–C." },
-      { id: "s1e1", c: "E", t: "Burgmüller Op. 100 No. 2, Arabesque", d: "Even right-hand groups over a light left-hand staccato.", q: "Burgmüller 25 Etudes Op.100" },
-      { id: "s1e2", c: "E", t: "Burgmüller Op. 100 No. 15, Ballade", d: "Left-hand melody with right-hand repeated chords.", q: "Burgmüller 25 Etudes Op.100" },
-      { id: "s1r1", c: "R", t: "Chopin Prelude in E minor, Op. 28 No. 4", d: "Practise the left-hand chords alone and listen for the one note that moves each time.", q: "Chopin Preludes Op.28" },
-      { id: "s1r2", c: "R", t: "Chopin Prelude in B minor, Op. 28 No. 6", d: "Melody in the left hand, in the same key as your Op. 69 No. 2 waltz.", q: "Chopin Preludes Op.28" },
-      { id: "s1r3", c: "R", t: "Bach Little Prelude in C major, BWV 939", d: "A first step into Baroque touch and finger independence.", q: "Bach Little Preludes BWV 939" },
-      { id: "s1r4", c: "R", t: "Schumann Album for the Young Op. 68 No. 10, The Happy Farmer", d: "Sing the left-hand tune over a soft right hand.", q: "Schumann Album für die Jugend Op.68" },
+      { id: "s1e1", c: "E", t: "Burgmüller Op. 100 No. 2, Arabesque", d: "Even right-hand groups over a light left-hand staccato.", q: "25 Études faciles et progressives, Op.100 (Burgmüller, Friedrich)" },
+      { id: "s1e2", c: "E", t: "Burgmüller Op. 100 No. 15, Ballade", d: "Left-hand melody with right-hand repeated chords.", q: "25 Études faciles et progressives, Op.100 (Burgmüller, Friedrich)" },
+      { id: "s1r0", c: "R", t: "Chopin Waltz in B minor, Op. 69 No. 2: finish learning", keep: "Chopin Waltz in B minor, Op. 69 No. 2", d: "Finish this before starting the E minor Prelude.", q: "Waltzes, Op.69 (Chopin, Frédéric)" },
+      { id: "s1r1", c: "R", t: "Chopin Prelude in E minor, Op. 28 No. 4", d: "Practise the left-hand chords alone and listen for the one note that moves each time.", q: "Preludes, Op.28 (Chopin, Frédéric)" },
+      { id: "s1r2", c: "R", t: "Chopin Prelude in B minor, Op. 28 No. 6", d: "Melody in the left hand, in the same key as your Op. 69 No. 2 waltz.", q: "Preludes, Op.28 (Chopin, Frédéric)" },
+      { id: "s1r3", c: "R", t: "Bach Little Prelude in C major, BWV 939", d: "A first step into Baroque touch and finger independence.", q: "Prelude in C major, BWV 939 (Bach, Johann Sebastian)" },
+      { id: "s1r4", c: "R", t: "Schumann Album for the Young Op. 68 No. 10, The Happy Farmer", d: "Sing the left-hand tune over a soft right hand.", q: "Album für die Jugend, Op.68 (Schumann, Robert)" },
       { id: "s1h1", c: "H", t: "Key signatures and the circle of fifths by heart", d: "Say the signature for any key in under two seconds." },
       { id: "s1h2", c: "H", t: "Primary chords I, IV, V and V7 in every major key", d: "Then find them in both of your waltzes." },
-      { id: "s1s1", c: "S", t: "Sight-read 5 minutes a day", d: "Choose music a level below what you play, and keep going without stopping." },
+      { id: "s1s1", c: "S", t: "Sight-read 5 minutes a day", d: "Choose music a level below what you play, and keep going without stopping.", links: [
+        im("Gurlitt, The First Lessons, Op. 117", "Anfangs-Stunden, Op.117 (Gurlitt, Cornelius)"),
+        im("Türk, 120 Handstücke (on his IMSLP page)", "Category:Türk, Daniel Gottlob"),
+        im("Notebooks for Anna Magdalena Bach (Bach, Johann Sebastian)", "Notebooks for Anna Magdalena Bach (Bach, Johann Sebastian)"),
+        MUTOPIA,
+      ] },
     ],
   },
   {
@@ -76,16 +94,19 @@ export const STAGES: Stage[] = [
       { id: "s2t3", c: "T", t: "All scales hands together at 110" },
       { id: "s2t4", c: "T", t: "Scales in contrary motion, all keys" },
       { id: "s2t5", c: "T", t: "Scales in thirds and sixths: C, G, D, A" },
-      { id: "s2e1", c: "E", t: "Burgmüller Op. 100 No. 18, Inquiétude", q: "Burgmüller 25 Etudes Op.100" },
-      { id: "s2e2", c: "E", t: "Burgmüller Op. 100 No. 25, La chevaleresque", q: "Burgmüller 25 Etudes Op.100" },
-      { id: "s2r1", c: "R", t: "Chopin Nocturne in C♯ minor, B. 49 (Lento con gran espressione)", d: "Learn the left hand first. Leave the right-hand runs for last and practise them slowly in rhythm groups.", q: "Chopin Nocturne C-sharp minor B.49" },
-      { id: "s2r2", c: "R", t: "Chopin Mazurka in A minor, Op. 68 No. 2", d: "Feel the accent on beat 2 or 3, which sets the mazurka apart from the waltz.", q: "Chopin Mazurkas Op.68" },
-      { id: "s2r3", c: "R", t: "Bach Little Prelude in D minor, BWV 926", q: "Bach Prelude BWV 926" },
-      { id: "s2r4", c: "R", t: "Schumann Op. 68 No. 12, Knecht Ruprecht", q: "Schumann Album für die Jugend Op.68" },
-      { id: "s2r5", c: "R", t: "Grieg Lyric Pieces Op. 12 No. 1, Arietta", q: "Grieg Lyric Pieces Op.12" },
+      { id: "s2e1", c: "E", t: "Burgmüller Op. 100 No. 18, Inquiétude", q: "25 Études faciles et progressives, Op.100 (Burgmüller, Friedrich)" },
+      { id: "s2e2", c: "E", t: "Burgmüller Op. 100 No. 25, La chevaleresque", q: "25 Études faciles et progressives, Op.100 (Burgmüller, Friedrich)" },
+      { id: "s2r1", c: "R", t: "Chopin Nocturne in C♯ minor, B. 49 (Lento con gran espressione)", d: "Learn the left hand first. Leave the right-hand runs for last and practise them slowly in rhythm groups.", q: "Nocturne in C-sharp minor, B.49 (Chopin, Frédéric)" },
+      { id: "s2r2", c: "R", t: "Chopin Mazurka in A minor, Op. 68 No. 2", d: "Feel the accent on beat 2 or 3, which sets the mazurka apart from the waltz.", q: "Mazurkas (Chopin, Frédéric)" },
+      { id: "s2r3", c: "R", t: "Bach Little Prelude in D minor, BWV 926", q: "Klavierbüchlein für Wilhelm Friedemann Bach (Bach, Johann Sebastian)" },
+      { id: "s2r4", c: "R", t: "Schumann Op. 68 No. 12, Knecht Ruprecht", q: "Album für die Jugend, Op.68 (Schumann, Robert)" },
+      { id: "s2r5", c: "R", t: "Grieg Lyric Pieces Op. 12 No. 1, Arietta", q: "Lyric Pieces, Op.12 (Grieg, Edvard)" },
       { id: "s2h1", c: "H", t: "Diminished 7th chords and how they resolve" },
       { id: "s2h2", c: "H", t: "Harmonic analysis of the B minor Waltz, Op. 69 No. 2", d: "Mark each chord in your score with a Roman numeral." },
-      { id: "s2s1", c: "S", t: "Sight-read four-part chorales or hymns" },
+      { id: "s2s1", c: "S", t: "Sight-read four-part chorales or hymns", links: [
+        im("Bach, 371 four-part chorales", "371 Vierstimmige Choralgesänge (Bach, Johann Sebastian)"),
+        { l: "Hymnary.org: free hymn scores", url: "https://hymnary.org/" },
+      ] },
     ],
   },
   {
@@ -97,16 +118,21 @@ export const STAGES: Stage[] = [
       { id: "s3t2", c: "T", t: "Russian arpeggios in B♭ major / G minor", d: "This completes the cycle of 12 keys." },
       { id: "s3t3", c: "T", t: "All scales at 120, harmonic and melodic minor included" },
       { id: "s3t4", c: "T", t: "Chromatic scale in contrary motion and a minor third apart" },
-      { id: "s3e1", c: "E", t: "Czerny Op. 849, selected études", q: "Czerny Op.849" },
-      { id: "s3e2", c: "E", t: "Heller Op. 47, selected études", q: "Heller 25 Etudes Op.47" },
-      { id: "s3r1", c: "R", t: "Chopin Waltz in C♯ minor, Op. 64 No. 2", q: "Chopin Waltzes Op.64" },
-      { id: "s3r2", c: "R", t: "Chopin Nocturne in E♭ major, Op. 9 No. 2", q: "Chopin Nocturnes Op.9" },
-      { id: "s3r3", c: "R", t: "Bach Two-Part Invention No. 1 in C major, BWV 772", q: "Bach Inventions BWV 772" },
-      { id: "s3r4", c: "R", t: "Bach Two-Part Invention No. 8 in F major, BWV 779", q: "Bach Inventions BWV 772" },
-      { id: "s3r5", c: "R", t: "Grieg Lyric Pieces Op. 12 No. 2, Waltz", q: "Grieg Lyric Pieces Op.12" },
-      { id: "s3r6", c: "R", t: "Mendelssohn Song Without Words Op. 30 No. 3", q: "Mendelssohn Lieder ohne Worte Op.30" },
+      { id: "s3e1", c: "E", t: "Czerny Op. 849, selected études", q: "30 Études de mécanisme, Op.849 (Czerny, Carl)" },
+      { id: "s3e2", c: "E", t: "Heller Op. 47, selected études", q: "25 Etudes, Op.47 (Heller, Stephen)" },
+      { id: "s3r1", c: "R", t: "Chopin Waltz in C♯ minor, Op. 64 No. 2", q: "Waltzes, Op.64 (Chopin, Frédéric)" },
+      { id: "s3r2", c: "R", t: "Chopin Nocturne in E♭ major, Op. 9 No. 2", q: "Nocturnes (Chopin, Frédéric)" },
+      { id: "s3r3", c: "R", t: "Bach Two-Part Invention No. 1 in C major, BWV 772", q: "15 Inventions, BWV 772-786 (Bach, Johann Sebastian)" },
+      { id: "s3r4", c: "R", t: "Bach Two-Part Invention No. 8 in F major, BWV 779", q: "15 Inventions, BWV 772-786 (Bach, Johann Sebastian)" },
+      { id: "s3r5", c: "R", t: "Grieg Lyric Pieces Op. 12 No. 2, Waltz", q: "Lyric Pieces, Op.12 (Grieg, Edvard)" },
+      { id: "s3r6", c: "R", t: "Mendelssohn Song Without Words Op. 30 No. 3", q: "Lieder ohne Worte, Op.30 (Mendelssohn, Felix)" },
       { id: "s3h1", c: "H", t: "Modulation: find every key change in the C♯ minor Waltz" },
-      { id: "s3s1", c: "S", t: "Sight-read song accompaniments and easy chamber parts" },
+      { id: "s3s1", c: "S", t: "Sight-read song accompaniments and easy chamber parts", links: [
+        im("Schubert, Winterreise (song accompaniments)", "Winterreise, D.911 (Schubert, Franz)"),
+        im("Schumann, Dichterliebe, Op. 48", "Dichterliebe, Op.48 (Schumann, Robert)"),
+        im("Diabelli, Melodious Exercises for 4 hands, Op. 149", "28 Melodische Übungsstücke, Op.149 (Diabelli, Anton)"),
+        MUTOPIA,
+      ] },
     ],
   },
   {
@@ -117,20 +143,45 @@ export const STAGES: Stage[] = [
       { id: "s4t1", c: "T", t: "All scales at 132, and in thirds and sixths in every key" },
       { id: "s4t2", c: "T", t: "Dominant 7th and diminished 7th arpeggios, all keys, 4 octaves" },
       { id: "s4t3", c: "T", t: "Double-third scale in C major, hands separately" },
-      { id: "s4e1", c: "E", t: "Czerny Op. 299, selected études", q: "Czerny Op.299" },
-      { id: "s4r1", c: "R", t: "Chopin Waltz in D♭ major, Op. 64 No. 1 (Minute)", q: "Chopin Waltzes Op.64" },
-      { id: "s4r2", c: "R", t: "Chopin Nocturne in E minor, Op. 72 No. 1", q: "Chopin Nocturne Op.72 No.1" },
-      { id: "s4r3", c: "R", t: "Chopin Mazurka in B♭ major, Op. 7 No. 1", q: "Chopin Mazurkas Op.7" },
-      { id: "s4r4", c: "R", t: "Bach Prelude and Fugue in C major, WTC I, BWV 846", q: "Bach Well-Tempered Clavier Book 1" },
-      { id: "s4r5", c: "R", t: "Schubert Impromptu in A♭ major, Op. 142 No. 2 (D. 935)", q: "Schubert Impromptus D.935" },
-      { id: "s4r6", c: "R", t: "Debussy, Rêverie", q: "Debussy Rêverie" },
+      { id: "s4e1", c: "E", t: "Czerny Op. 299, selected études", q: "Die Schule der Geläufigkeit, Op.299 (Czerny, Carl)" },
+      { id: "s4r1", c: "R", t: "Chopin Waltz in D♭ major, Op. 64 No. 1 (Minute)", q: "Waltzes, Op.64 (Chopin, Frédéric)" },
+      { id: "s4r2", c: "R", t: "Chopin Nocturne in E minor, Op. 72 No. 1", q: "Nocturne in E minor, Op.72 No.1 (Chopin, Frédéric)" },
+      { id: "s4r3", c: "R", t: "Chopin Mazurka in B♭ major, Op. 7 No. 1", q: "Mazurkas, Op.7 (Chopin, Frédéric)" },
+      { id: "s4r4", c: "R", t: "Bach Prelude and Fugue in C major, WTC I, BWV 846", q: "Prelude and Fugue in C major, BWV 846 (Bach, Johann Sebastian)" },
+      { id: "s4r5", c: "R", t: "Schubert Impromptu in A♭ major, Op. 142 No. 2 (D. 935)", q: "4 Impromptus, D.935 (Schubert, Franz)" },
+      { id: "s4r6", c: "R", t: "Debussy, Rêverie", q: "Rêverie (Debussy, Claude)" },
       { id: "s4h1", c: "H", t: "Form: binary, ternary and rondo; map each piece you play" },
-      { id: "s4s1", c: "S", t: "Sight-read Stage 2 pieces fluently" },
+      { id: "s4s1", c: "S", t: "Sight-read Stage 2 pieces fluently", links: [
+        im("Schumann, Album for the Young, Op. 68", "Album für die Jugend, Op.68 (Schumann, Robert)"),
+        im("Tchaikovsky, Album for the Young, Op. 39", "Children's Album, Op.39 (Tchaikovsky, Pyotr)"),
+        im("Grieg, Lyric Pieces, Op. 12", "Lyric Pieces, Op.12 (Grieg, Edvard)"),
+        im("Burgmüller, 18 Études, Op. 109", "18 Études, Op.109 (Burgmüller, Friedrich)"),
+      ] },
     ],
   },
 ];
 
-export const MAINTAIN = [
+/** Pieces you already play. Every finished repertoire item joins them in the Keep up rotation. */
+export const MAINTAIN: { t: string; d: string }[] = [
   { t: "Chopin Waltz in A minor, B. 150", d: "Play it through once, then fix one spot." },
-  { t: "Chopin Waltz in B minor, Op. 69 No. 2", d: "Play it through once, then fix one spot." },
 ];
+
+const KEEP_TIP = "Play it through once, then fix one spot.";
+
+/** The Keep up rotation: MAINTAIN plus every checked repertoire item, in path order. */
+export const maintained = (checks: Record<string, boolean>) => [
+  ...MAINTAIN,
+  ...STAGES.flatMap((st) => st.items)
+    .filter((i) => i.c === "R" && checks[i.id])
+    .map((i) => ({ t: i.keep ?? i.t, d: KEEP_TIP })),
+];
+
+/** Learning steps for a repertoire piece. Reaching the last one marks the piece done. */
+export const PIECE_STEPS: { l: string; d: string }[] = [
+  { l: "Notes, hands separately", d: "Learn the notes in 4–8 bar sections, hands separately and slowly. Write in fingering as you go." },
+  { l: "Hands together, slow", d: "Put one section hands together at about half tempo with the metronome. Stop before a mistake becomes a habit." },
+  { l: "Up to tempo", d: "Raise the metronome a few clicks at a time, and practise joining the sections across their seams." },
+  { l: "Polishing", d: "Play it through, record yourself, then fix one spot. Shape the dynamics, pedalling and rubato." },
+  { l: "Ready to perform", d: "Play it start to finish without stopping, as if for someone listening." },
+];
+export const LAST_STEP = PIECE_STEPS.length - 1;

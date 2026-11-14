@@ -1,3 +1,4 @@
+import { LAST_STEP } from "../data/curriculum";
 import { update, todayStr, type ArpStatus, type ScaleForm } from "./store";
 
 export const setMinutes = (m: number) => update((s) => { s.settings.minutes = m; });
@@ -47,4 +48,21 @@ export function deleteLog(ts: number) {
 
 export function setFingering(key: string, form: number, v: string) {
   update((s) => { s.fingerings[`${key}:${form}`] = v.trim(); });
+}
+
+/** Set a piece's learning step; the last step marks it done, going back un-marks it. */
+export function setPieceStep(id: string, step: number) {
+  update((s) => {
+    step = Math.max(0, Math.min(LAST_STEP, step));
+    s.pieces[id] = { ...s.pieces[id], step };
+    if (step === LAST_STEP) s.checks[id] = true;
+    else delete s.checks[id];
+  });
+}
+
+/** The Path checkbox for a piece: done means the last step, un-done goes back one step. */
+export const togglePiece = (id: string, done: boolean) => setPieceStep(id, done ? LAST_STEP - 1 : LAST_STEP);
+
+export function setPieceBars(id: string, bars: string) {
+  update((s) => { s.pieces[id] = { step: s.pieces[id]?.step ?? 0, bars: bars.trim() }; });
 }

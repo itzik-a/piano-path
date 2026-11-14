@@ -4,8 +4,9 @@ import { markBlock, setMinutes } from "../state/actions";
 import { arpCount, fmt, stageProgress, todayDone, todaysPlan } from "../lib/plan";
 import { clearTimerFor, toggleTimer, useTimer } from "../lib/timer";
 import { Check, Ring, Seg } from "../components/ui";
-import { IconChevron, IconPause, IconPlay, IconReset } from "../components/Icons";
+import { IconChevron, IconExternal, IconPause, IconPlay, IconReset } from "../components/Icons";
 import { ArpForms } from "../components/ArpForms";
+import { PieceProgress } from "../components/PieceProgress";
 import { pretty } from "../data/curriculum";
 
 export function Today({ onLog }: { onLog: (prefill: { min: number; items: string }) => void }) {
@@ -57,7 +58,17 @@ export function Today({ onLog }: { onLog: (prefill: { min: number; items: string
                 <div className="block-body">
                   <div className="eyebrow">{b.cat}</div>
                   <div className="block-title">{b.ttl}</div>
+                  {b.piece && <PieceProgress id={b.piece} title={b.ttl} showBars />}
                   <p className="block-detail">{b.det}</p>
+                  {b.links && (
+                    <ul className="links">
+                      {b.links.map((l) => (
+                        <li key={l.url}>
+                          <a className="link" href={l.url} target="_blank" rel="noopener">{l.l} <IconExternal /></a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {b.k && (
                     <button type="button" className="disclose" aria-expanded={showForms} onClick={() => setShowForms(!showForms)}>
                       {showForms ? "Hide" : "Show"} the 11 forms in {pretty(b.k)}

@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "start": ". \"${NVM_DIR:-$HOME/.nvm}/nvm.sh\" && nvm use && vite --host",
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",

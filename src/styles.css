@@ -195,6 +195,8 @@ button { cursor: pointer; }
 .ring-label b { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .ring-label span { font-size: .7rem; color: var(--muted); }
 
+.links { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; }
+.links .link { min-height: 40px; margin-top: 0; }
 .link { display: inline-flex; align-items: center; gap: 4px; font-size: .84rem; font-weight: 500; margin-top: 4px; min-height: 28px; }
 
 /* ---------- Top bar ---------- */
@@ -538,3 +540,23 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---------- Piece progress ---------- */
+.piece-progress { display: grid; gap: 6px; margin: 8px 0 4px; }
+.steps { display: flex; gap: 4px; }
+.step {
+  position: relative; flex: 0 0 auto; width: 40px; height: 40px; padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.step span {
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  font-size: .78rem; font-weight: 600; color: var(--muted); background: var(--track);
+  transition: background .15s, color .15s;
+}
+.step.reached span { background: var(--accent-soft); color: var(--accent); }
+.step[aria-pressed="true"] span { background: var(--accent); color: var(--on-accent); }
+.step:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 10px; }
+.step-label { font-size: .84rem; color: var(--muted); }
+.step-label b { color: var(--ink); font-weight: 600; }
+.bars { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); max-width: 200px; }
+.block.done .piece-progress { opacity: 1; }

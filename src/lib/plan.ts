@@ -1,5 +1,5 @@
 /* Builds today's practice plan from the current stage and technique status. */
-import { KEYS, MAINTAIN, NEW_ARP_ORDER, STAGES, pretty, type Stage } from "../data/curriculum";
+import { KEYS, NEW_ARP_ORDER, PIECE_STEPS, STAGES, maintained, pretty, type Link, type Stage } from "../data/curriculum";
 import { todayStr, type AppState } from "../state/store";
 
 export interface Block {
@@ -10,6 +10,10 @@ export interface Block {
   min: number;
   /** for the arpeggio block: the key whose forms to show */
   k?: string;
+  /** free sheet-music links */
+  links?: Link[];
+  /** for the new-piece block: the repertoire item id */
+  piece?: string;
 }
 
 export function stageProgress(state: AppState, st: Stage) {
@@ -50,7 +54,9 @@ export function todaysPlan(state: AppState) {
   const mins: Record<string, number> = {};
   weights.forEach(([k, f]) => { mins[k] = Math.max(3, Math.round(M * f)); });
 
-  const keep = MAINTAIN[day % 2];
+  const keepList = maintained(state.checks);
+  const keep = keepList[day % keepList.length]; // round-robin through every piece you play
+  const readItem = st.items.find((i) => i.c === "S" && i.links);
   const blocks: Block[] = [
     {
       id: "warm", cat: "Scales", ttl: `${pretty(sk.k)} major and ${sk.m} minor`, min: mins.warm,
@@ -69,11 +75,14 @@ export function todaysPlan(state: AppState) {
     {
       id: "piece", cat: "New piece", min: mins.piece,
       ttl: rep[0] ? rep[0].t : "Stage repertoire complete",
-      det: rep[0]?.d || "Pick a section of 4–8 bars, hands separately, then together.",
+      piece: rep[0]?.id,
+      det: rep[0]
+        ? [PIECE_STEPS[state.pieces[rep[0].id]?.step ?? 0].d, rep[0].d].filter(Boolean).join(" ")
+        : "Pick a section of 4–8 bars, hands separately, then together.",
     },
     { id: "keep", cat: "Keep up", ttl: keep.t, det: keep.d, min: mins.keep },
     {
-      id: "read", cat: "Sight-reading", ttl: "Sight-read something new", min: mins.read,
+      id: "read", cat: "Sight-reading", ttl: "Sight-read something new", min: mins.read, links: readItem?.links,
       det: th[0] ? `Theory to look at this week: ${th[0].t}.` : "Read at a steady tempo without stopping.",
     },
   ];
