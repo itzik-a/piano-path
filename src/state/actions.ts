@@ -1,5 +1,5 @@
 import { LAST_STEP } from "../data/curriculum";
-import { update, todayStr, type ArpStatus, type ScaleForm } from "./store";
+import { update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
 
 export const setMinutes = (m: number) => update((s) => { s.settings.minutes = m; });
 
@@ -65,4 +65,28 @@ export const togglePiece = (id: string, done: boolean) => setPieceStep(id, done 
 
 export function setPieceBars(id: string, bars: string) {
   update((s) => { s.pieces[id] = { step: s.pieces[id]?.step ?? 0, bars: bars.trim() }; });
+}
+
+/** Tick or untick keys in today's scale or arpeggio rotation. The block is done when all of today's keys are ticked. */
+export function setKeysDone(rot: Rot, keys: string[], done: boolean, todayKeys: string[]) {
+  update((s) => {
+    const d = todayStr();
+    rollRotation(s, d);
+    const day = s.rot.day!;
+    day[rot] = done ? [...new Set([...day[rot], ...keys])] : day[rot].filter((k) => !keys.includes(k));
+    if (!s.today || s.today.date !== d) s.today = { date: d, done: {} };
+    const id = rot === "scale" ? "warm" : "arp";
+    if (todayKeys.every((k) => day[rot].includes(k))) s.today.done[id] = true;
+    else delete s.today.done[id];
+  });
+}
+
+/** Fold an earlier day's ticks into the counts and start a fresh record for today. */
+function rollRotation(s: AppState, d: string) {
+  const day = s.rot.day;
+  if (day && day.d === d) return;
+  if (day && day.d < d) {
+    (["scale", "arp"] as Rot[]).forEach((r) => day[r].forEach((k) => { s.rot.n[r][k] = (s.rot.n[r][k] || 0) + 1; }));
+  }
+  s.rot.day = { d, scale: [], arp: [] };
 }

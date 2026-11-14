@@ -1,6 +1,6 @@
 /* Builds today's practice plan from the current stage and technique status. */
-import { KEYS, NEW_ARP_ORDER, PIECE_STEPS, STAGES, maintained, pretty, type Link, type Stage } from "../data/curriculum";
-import { todayStr, type AppState } from "../state/store";
+import { KEYS, PIECE_STEPS, STAGES, maintained, pretty, type Link, type Stage } from "../data/curriculum";
+import { todayStr, type AppState, type Rot } from "../state/store";
 
 export interface Block {
   id: string;
@@ -8,8 +8,9 @@ export interface Block {
   ttl: string;
   det: string;
   min: number;
-  /** for the arpeggio block: the key whose forms to show */
-  k?: string;
+  /** scale and arpeggio blocks: which rotation, and today's keys */
+  rot?: Rot;
+  keys?: string[];
   /** free sheet-music links */
   links?: Link[];
   /** for the new-piece block: the repertoire item id */
@@ -29,43 +30,65 @@ export function todayDone(state: AppState): Record<string, boolean> {
   return state.today.done || {};
 }
 
+/** Times each key has been ticked before today (today's ticks don't change today's keys). */
+function rotCounts(state: AppState, rot: Rot) {
+  const n = { ...state.rot.n[rot] };
+  const day = state.rot.day;
+  if (day && day.d < todayStr()) day[rot].forEach((k) => { n[k] = (n[k] || 0) + 1; });
+  return n;
+}
+
+/** Today's two keys: the least-practised keys, in circle-of-fifths order (C, G, D, … F).
+    A key you don't tick stays first in line, so it comes up again the next day. */
+export function rotationKeys(state: AppState, rot: Rot) {
+  const n = rotCounts(state, rot);
+  return KEYS.map((o, i) => ({ o, i, c: n[o.k] || 0 }))
+    .sort((a, b) => a.c - b.c || a.i - b.i)
+    .slice(0, 2).map((x) => x.o);
+}
+
+/** Keys ticked today in a rotation. */
+export function ticked(state: AppState, rot: Rot): string[] {
+  const day = state.rot.day;
+  return day && day.d === todayStr() ? day[rot] : [];
+}
+
+/** Blocks left out of Today for now (their time goes to the new piece). Remove an id to bring it back. */
+export const HIDDEN_BLOCKS = new Set(["etude"]);
+
 export function todaysPlan(state: AppState) {
   const st = STAGES[(state.settings.stage || 1) - 1] ?? STAGES[0];
   const M = state.settings.minutes || 45;
   const day = Math.floor(new Date(todayStr()).getTime() / 864e5);
-  const sk = KEYS[day % 12];
-  const sc = state.scales[sk.k] || { maj: 95, nat: 95, harm: 0, mel: 0 };
-  const minorForms = [sc.harm ? "harmonic" : null, sc.mel ? "melodic" : null].filter(Boolean);
-
-  let arpKey = KEYS.find((o) => state.arps[o.k] === "learning");
-  let arpNew = false;
-  if (!arpKey) {
-    const k = NEW_ARP_ORDER.find((k) => state.arps[k] === "none");
-    if (k) { arpKey = KEYS.find((o) => o.k === k); arpNew = true; }
-  }
-  const solid = KEYS.filter((o) => state.arps[o.k] === "solid");
-  const review = solid.length ? solid[day % solid.length] : null;
+  const scaleKeys = rotationKeys(state, "scale");
+  const arpKeys = rotationKeys(state, "arp");
+  const notSolid = arpKeys.filter((o) => state.arps[o.k] !== "solid");
 
   const open = (c: string) => st.items.filter((i) => i.c === c && !state.checks[i.id]);
   const rep = open("R"), et = open("E"), th = open("H");
-  const techOpen = open("T").filter((i) => !/arpeggio/i.test(i.t));
+  // arpeggios and harmonic/melodic minor are covered by the daily rotation
+  const techOpen = open("T").filter((i) => !/arpeggio|harmonic minor|melodic minor/i.test(i.t));
 
-  const weights: [string, number][] = [["warm", .15], ["arp", .15], ["etude", .15], ["piece", .35], ["keep", .10], ["read", .10]];
+  const weights: [string, number][] = [["warm", .18], ["arp", .44], ["etude", .10], ["piece", .18], ["keep", .05], ["read", .05]];
   const mins: Record<string, number> = {};
-  weights.forEach(([k, f]) => { mins[k] = Math.max(3, Math.round(M * f)); });
+  const spare = weights.filter(([k]) => HIDDEN_BLOCKS.has(k)).reduce((a, [, f]) => a + f, 0);
+  weights.forEach(([k, f]) => { mins[k] = Math.max(3, Math.round(M * (k === "piece" ? f + spare : f))); });
 
   const keepList = maintained(state.checks);
   const keep = keepList[day % keepList.length]; // round-robin through every piece you play
   const readItem = st.items.find((i) => i.c === "S" && i.links);
-  const blocks: Block[] = [
+  const all: Block[] = [
     {
-      id: "warm", cat: "Scales", ttl: `${pretty(sk.k)} major and ${sk.m} minor`, min: mins.warm,
-      det: `Hands together at your current tempo (${sc.maj || 95}). Minor: natural${minorForms.length ? ", " + minorForms.join(", ") : ""}.${techOpen[0] ? " Then a few minutes on: " + techOpen[0].t + "." : ""}`,
+      id: "warm", cat: "Scales", min: mins.warm, rot: "scale", keys: scaleKeys.map((o) => o.k),
+      ttl: scaleKeys.map((o) => `${pretty(o.k)} major / ${o.m} minor`).join(", then "),
+      det: `Hands together. Tick a key once you've played all four of its scales; a key you don't tick moves to tomorrow.${techOpen[0] ? " Then a few minutes on: " + techOpen[0].t + "." : ""}`,
     },
     {
-      id: "arp", cat: "Russian arpeggios", min: mins.arp, k: arpKey?.k ?? review?.k,
-      ttl: arpKey ? `${arpNew ? "Start" : "Keep learning"}: ${pretty(arpKey.k)} major / ${arpKey.m} minor` : "Review a solid key",
-      det: (arpKey ? "Hands separately, slowly, all 11 forms. Mark the key as Learning, then Solid, on the Technique tab." : "") + (review ? ` Then one review run in ${pretty(review.k)}.` : ""),
+      id: "arp", cat: "Russian arpeggios", min: mins.arp, rot: "arp", keys: arpKeys.map((o) => o.k),
+      ttl: `11 forms on ${arpKeys.map((o) => pretty(o.k)).join(", then ")}`,
+      det: (notSolid.length
+        ? `${notSolid.map((o) => pretty(o.k)).join(" and ")} ${notSolid.length > 1 ? "aren't" : "isn't"} solid yet: hands separately and slowly. Mark it Learning, then Solid, on the Technique tab.`
+        : "Hands together.") + " Tick a key once all 11 forms are done; a key you don't tick moves to tomorrow.",
     },
     {
       id: "etude", cat: "Étude", min: mins.etude,
@@ -86,6 +109,7 @@ export function todaysPlan(state: AppState) {
       det: th[0] ? `Theory to look at this week: ${th[0].t}.` : "Read at a steady tempo without stopping.",
     },
   ];
+  const blocks = all.filter((b) => !HIDDEN_BLOCKS.has(b.id));
   return { st, blocks, total: blocks.reduce((a, b) => a + b.min, 0) };
 }
 

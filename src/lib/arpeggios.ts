@@ -9,7 +9,7 @@ const NATURAL_PC = [0, 2, 4, 5, 7, 9, 11];
 type Interval = [number, number];
 const I: Record<string, Interval> = {
   P1: [0, 0], M2: [1, 2], m3: [2, 3], M3: [2, 4], P4: [3, 5], A4: [3, 6],
-  d5: [4, 6], P5: [4, 7], m6: [5, 8], M6: [5, 9], m7: [6, 10], d7: [6, 9],
+  d5: [4, 6], P5: [4, 7], A5: [4, 8], m6: [5, 8], M6: [5, 9], m7: [6, 10], d7: [6, 9], M7: [6, 11],
 };
 
 export interface ArpForm {
@@ -89,4 +89,18 @@ export function enharmonic(note: string): string | null {
   if (!["𝄫", "𝄪"].includes(acc) && !["F♭", "C♭", "E♯", "B♯"].includes(note)) return null;
   const pc = (NATURAL_PC[LETTERS.indexOf(letter)] + (ACC_VAL[acc] || 0) + 12) % 12;
   return PLAIN[pc];
+}
+
+/** The major scale and its relative minor's three forms, spelled from the major key
+    (so the raised 7th of D♯ minor is C𝄪, not D). Melodic shows the way up; it comes down natural. */
+const SCALES: { l: string; minor: boolean; iv: string[] }[] = [
+  { l: "Major", minor: false, iv: ["P1", "M2", "M3", "P4", "P5", "M6", "M7", "P1"] },
+  { l: "Natural minor", minor: true, iv: ["M6", "M7", "P1", "M2", "M3", "P4", "P5", "M6"] },
+  { l: "Harmonic minor", minor: true, iv: ["M6", "M7", "P1", "M2", "M3", "P4", "A5", "M6"] },
+  { l: "Melodic minor ↑", minor: true, iv: ["M6", "M7", "P1", "M2", "M3", "A4", "A5", "M6"] },
+];
+export const SCALE_FORMS = ["maj", "nat", "harm", "mel"] as const;
+
+export function keyScales(key: string) {
+  return SCALES.map((sc, i) => ({ f: SCALE_FORMS[i], l: sc.l, minor: sc.minor, notes: sc.iv.map((iv) => noteAbove(key, iv)) }));
 }

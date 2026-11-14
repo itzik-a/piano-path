@@ -23,6 +23,14 @@ export interface PieceProgress {
   bars?: string;
 }
 
+export type Rot = "scale" | "arp";
+
+/** Two-keys-a-day rotation: how many times each key has been ticked (n), plus the latest day's ticks. */
+export interface Rotation {
+  n: Record<Rot, Record<string, number>>;
+  day: { d: string; scale: string[]; arp: string[] } | null;
+}
+
 export interface AppState {
   v: 1;
   settings: { minutes: number; stage: number };
@@ -37,6 +45,7 @@ export interface AppState {
   /** `ts` of deleted log entries, so a delete on one device sticks after sync */
   logDeleted: number[];
   today: { date: string; done: Record<string, boolean> } | null;
+  rot: Rotation;
   updatedAt: number;
 }
 
@@ -51,7 +60,7 @@ export function defaults(): AppState {
     arps[o.k] = i < 6 ? "solid" : "none";
     scales[o.k] = { maj: 95, nat: 95, harm: 0, mel: 0 };
   });
-  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, updatedAt: 0 };
+  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {} }, day: null }, updatedAt: 0 };
 }
 
 export function normalize(s: unknown): AppState {
@@ -69,6 +78,7 @@ export function normalize(s: unknown): AppState {
     log: Array.isArray(x.log) ? x.log : [],
     logDeleted: Array.isArray(x.logDeleted) ? x.logDeleted : [],
     today: x.today || null,
+    rot: x.rot ? { n: { scale: x.rot.n?.scale || {}, arp: x.rot.n?.arp || {} }, day: x.rot.day || null } : d.rot,
     updatedAt: x.updatedAt || 0,
   };
 }
