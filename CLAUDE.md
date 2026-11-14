@@ -27,6 +27,7 @@ Vite + React 19 + TypeScript. Node 22 (`.nvmrc`; on this Mac use `nvm use`). `np
 - `src/lib/plan.ts`: `todaysPlan()` builds the daily plan. `src/lib/timer.ts`: block timer (memory only). `src/lib/audio.ts`: Web Audio click and chime.
 - `src/views/`: Today, Path, Technique, Log. `src/components/`: Metronome, icons, small UI pieces. Routing is the URL hash (`#today`, `#path`, `#technique`, `#log`).
 - Styling: plain CSS in `src/styles.css` with design tokens in `:root`.
+- PWA: `public/manifest.webmanifest`, PNG icons in `public/icons/` (iOS needs the 180px PNG as apple-touch-icon), and `public/sw.js` (registered in production only). The service worker caches the page and the files it links on install, uses network first for the page and cache first for hashed assets, and never touches the GitHub API. If you add a file that must work offline and isn't linked from `index.html`, it is cached the first time it loads. On iOS the Home Screen app has its own storage, separate from Safari, so each install connects sync once.
 
 ## Rules for changes
 
