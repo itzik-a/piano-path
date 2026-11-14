@@ -44,3 +44,7 @@ export function deleteLog(ts: number) {
     s.logDeleted = [...s.logDeleted, ts].slice(-500);
   });
 }
+
+export function setFingering(key: string, form: number, v: string) {
+  update((s) => { s.fingerings[`${key}:${form}`] = v.trim(); });
+}

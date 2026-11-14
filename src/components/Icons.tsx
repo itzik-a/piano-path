@@ -47,3 +47,6 @@ export const IconTrash = (p: P) => (
 export const IconMetronome = (p: P) => (
   <svg {...base(p)}><path d="M9 3h6l4 18H5L9 3Z" /><path d="M12 15l5-8" /><path d="M7.5 15h9" /></svg>
 );
+export const IconReset = (p: P) => (
+  <svg {...base(p)}><path d="M4 12a8 8 0 1 0 2.4-5.7" /><path d="M4 4v4.5h4.5" /></svg>
+);

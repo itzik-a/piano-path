@@ -48,6 +48,7 @@ export function toggleTimer(id: string, min: number) {
   emit();
 }
 
+/** Stop the timer and return the block to its full time. */
 export function clearTimerFor(id: string) {
   if (t.id !== id) return;
   clearInterval(iv);

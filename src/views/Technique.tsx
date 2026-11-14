@@ -1,5 +1,6 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
-import { KEYS, pretty } from "../data/curriculum";
+import { KEYS, NEW_ARP_ORDER, pretty } from "../data/curriculum";
+import { ArpForms } from "../components/ArpForms";
 import { useAppState, type ArpStatus, type ScaleForm } from "../state/store";
 import { cycleArp, setTempo } from "../state/actions";
 import { arpCount } from "../lib/plan";
@@ -66,6 +67,10 @@ function TempoInput({ value, onCommit, label }: { value: number; onCommit: (v: n
 
 export function Technique() {
   const state = useAppState();
+  const [formKey, setFormKey] = useState(
+    () => KEYS.find((o) => state.arps[o.k] === "learning")?.k ?? NEW_ARP_ORDER.find((k) => state.arps[k] === "none") ?? "C",
+  );
+  const formInfo = KEYS.find((o) => o.k === formKey)!;
   return (
     <>
       <header className="page-head">
@@ -85,6 +90,28 @@ export function Technique() {
           <span><i className="sw learning" />Learning</span>
           <span><i className="sw none" />Not yet</span>
         </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h2>The 11 forms in {pretty(formKey)}</h2>
+          <button type="button" className={`status ${state.arps[formKey]}`} onClick={() => cycleArp(formKey)}>{LABEL[state.arps[formKey]]}</button>
+        </div>
+        <div className="key-picker" role="group" aria-label="Choose a key">
+          {KEYS.map((o) => (
+            <button
+              type="button" key={o.k} className={`key-chip ${state.arps[o.k]}`} aria-pressed={o.k === formKey}
+              aria-label={`${pretty(o.k)} major, ${LABEL[state.arps[o.k]]}`} onClick={() => setFormKey(o.k)}
+            >
+              {pretty(o.k)}
+            </button>
+          ))}
+        </div>
+        <p className="muted small">
+          Each form starts on {pretty(formKey)} ({pretty(formKey)} major / {formInfo.m} minor). Fingering is right hand : left hand,
+          ascending; type your own and it syncs with your progress.
+        </p>
+        <ArpForms k={formKey} />
       </section>
 
       <section className="card">

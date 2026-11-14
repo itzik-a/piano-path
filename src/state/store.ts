@@ -22,6 +22,8 @@ export interface AppState {
   arps: Record<string, ArpStatus>;
   scales: Record<string, Record<ScaleForm, number>>;
   checks: Record<string, boolean>;
+  /** arpeggio fingerings you've entered, keyed "<key>:<form>", e.g. "A:3" */
+  fingerings: Record<string, string>;
   log: LogEntry[];
   /** `ts` of deleted log entries, so a delete on one device sticks after sync */
   logDeleted: number[];
@@ -40,7 +42,7 @@ export function defaults(): AppState {
     arps[o.k] = i < 6 ? "solid" : "none";
     scales[o.k] = { maj: 95, nat: 95, harm: 0, mel: 0 };
   });
-  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, log: [], logDeleted: [], today: null, updatedAt: 0 };
+  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, log: [], logDeleted: [], today: null, updatedAt: 0 };
 }
 
 export function normalize(s: unknown): AppState {
@@ -53,6 +55,7 @@ export function normalize(s: unknown): AppState {
     arps: { ...d.arps, ...(x.arps || {}) },
     scales: { ...d.scales, ...(x.scales || {}) },
     checks: x.checks || {},
+    fingerings: x.fingerings || {},
     log: Array.isArray(x.log) ? x.log : [],
     logDeleted: Array.isArray(x.logDeleted) ? x.logDeleted : [],
     today: x.today || null,

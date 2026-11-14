@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { useAppState } from "../state/store";
 import { markBlock, setMinutes } from "../state/actions";
 import { arpCount, fmt, stageProgress, todayDone, todaysPlan } from "../lib/plan";
 import { clearTimerFor, toggleTimer, useTimer } from "../lib/timer";
 import { Check, Ring, Seg } from "../components/ui";
-import { IconPause, IconPlay } from "../components/Icons";
+import { IconChevron, IconPause, IconPlay, IconReset } from "../components/Icons";
+import { ArpForms } from "../components/ArpForms";
+import { pretty } from "../data/curriculum";
 
 export function Today({ onLog }: { onLog: (prefill: { min: number; items: string }) => void }) {
   const state = useAppState();
   const timer = useTimer();
+  const [showForms, setShowForms] = useState(false);
   const { st, blocks, total } = todaysPlan(state);
   const done = todayDone(state);
   const doneMin = blocks.filter((b) => done[b.id]).reduce((a, b) => a + b.min, 0);
@@ -54,6 +58,12 @@ export function Today({ onLog }: { onLog: (prefill: { min: number; items: string
                   <div className="eyebrow">{b.cat}</div>
                   <div className="block-title">{b.ttl}</div>
                   <p className="block-detail">{b.det}</p>
+                  {b.k && (
+                    <button type="button" className="disclose" aria-expanded={showForms} onClick={() => setShowForms(!showForms)}>
+                      {showForms ? "Hide" : "Show"} the 11 forms in {pretty(b.k)}
+                      <IconChevron width={16} height={16} />
+                    </button>
+                  )}
                 </div>
                 <div className="block-side">
                   <span className={active ? "timer" : "mins"}>{active ? fmt(timer.left) : `${b.min} min`}</span>
@@ -67,7 +77,13 @@ export function Today({ onLog }: { onLog: (prefill: { min: number; items: string
                       {active && timer.running ? <IconPause width={18} height={18} /> : <IconPlay width={18} height={18} />}
                     </button>
                   )}
+                  {active && (
+                    <button type="button" className="icon-btn" aria-label={`Reset ${b.cat} timer`} title="Reset timer" onClick={() => clearTimerFor(b.id)}>
+                      <IconReset width={18} height={18} />
+                    </button>
+                  )}
                 </div>
+                {b.k && showForms && <div className="block-forms"><ArpForms k={b.k} /></div>}
                 {active && <div className="block-progress" style={{ width: `${(1 - timer.left / timer.total) * 100}%` }} />}
               </li>
             );

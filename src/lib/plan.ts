@@ -8,6 +8,8 @@ export interface Block {
   ttl: string;
   det: string;
   min: number;
+  /** for the arpeggio block: the key whose forms to show */
+  k?: string;
 }
 
 export function stageProgress(state: AppState, st: Stage) {
@@ -55,7 +57,7 @@ export function todaysPlan(state: AppState) {
       det: `Hands together at your current tempo (${sc.maj || 95}). Minor: natural${minorForms.length ? ", " + minorForms.join(", ") : ""}.${techOpen[0] ? " Then a few minutes on: " + techOpen[0].t + "." : ""}`,
     },
     {
-      id: "arp", cat: "Russian arpeggios", min: mins.arp,
+      id: "arp", cat: "Russian arpeggios", min: mins.arp, k: arpKey?.k ?? review?.k,
       ttl: arpKey ? `${arpNew ? "Start" : "Keep learning"}: ${pretty(arpKey.k)} major / ${arpKey.m} minor` : "Review a solid key",
       det: (arpKey ? "Hands separately, slowly, all 11 forms. Mark the key as Learning, then Solid, on the Technique tab." : "") + (review ? ` Then one review run in ${pretty(review.k)}.` : ""),
     },
