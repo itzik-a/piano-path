@@ -1,6 +1,7 @@
 /* The 11 Russian arpeggio forms for one key: chord, notes, and your fingering. */
 import { useEffect, useState } from "react";
-import { DEFAULT_FINGERINGS, FORMS, chordName, enharmonic, formNotes, noteAbove } from "../lib/arpeggios";
+import { DEFAULT_FINGERINGS, FORMS, chordLongName, chordName, enharmonic, formNotes, noteAbove } from "../lib/arpeggios";
+import { Seg } from "./ui";
 import { useAppState } from "../state/store";
 import { setFingering } from "../state/actions";
 
@@ -23,7 +24,42 @@ function Note({ n }: { n: string }) {
   return <span className="note">{n}{e && <small> ={e}</small>}</span>;
 }
 
+type View = "List" | "Details";
+const VIEW_KEY = "pianoPath.arpView";
+
 export function ArpForms({ k }: { k: string }) {
+  const [view, setViewState] = useState<View>(() => (localStorage.getItem(VIEW_KEY) === "Details" ? "Details" : "List"));
+  const setView = (v: View) => { setViewState(v); localStorage.setItem(VIEW_KEY, v); };
+  return (
+    <div className="arp-forms">
+      <Seg label="Forms view" options={["List", "Details"] as View[]} value={view} onChange={setView} />
+      {view === "List" ? <QuickList k={k} /> : <Detailed k={k} />}
+    </div>
+  );
+}
+
+/** One line per form: "3. F Major: A – C – F" */
+function QuickList({ k }: { k: string }) {
+  return (
+    <ol className="quick-forms">
+      {FORMS.map((f) => {
+        const rootEnh = enharmonic(noteAbove(k, f.root));
+        return (
+          <li key={f.n}>
+            <span className="qf-n">{f.n}.</span>
+            <span className="qf-name">
+              {chordLongName(k, f)}
+              {rootEnh && <small> (={rootEnh})</small>}
+            </span>
+            <span className="qf-notes">{formNotes(k, f).join(" – ")}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function Detailed({ k }: { k: string }) {
   const state = useAppState();
   return (
     <ol className="forms">

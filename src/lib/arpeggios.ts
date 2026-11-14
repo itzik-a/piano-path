@@ -66,6 +66,12 @@ export function chordName(key: string, f: ArpForm): string {
   return noteAbove(key, f.root) + f.suffix;
 }
 
+const LONG: Record<string, string> = { "": " Major", m: " Minor", "7": "7", "°7": "dim7" };
+/** Spelled-out chord name for the quick list: "F♯ Minor", "B7", "Adim7". */
+export function chordLongName(key: string, f: ArpForm): string {
+  return noteAbove(key, f.root) + LONG[f.suffix];
+}
+
 /** Fingerings you've supplied, as "RH : LH". Keyed "<key>:<form number>". */
 export const DEFAULT_FINGERINGS: Record<string, string> = {
   "A:1": "1,2,3 : 5,3,2,1",
