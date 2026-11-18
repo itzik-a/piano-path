@@ -3,8 +3,9 @@ import { useAppState } from "../state/store";
 import { markBlock, setKeysDone } from "../state/actions";
 import { arpCount, stageProgress, ticked, todayDone, todaysPlan, type Block } from "../lib/plan";
 import { Check, Ring } from "../components/ui";
-import { IconChevron, IconExternal } from "../components/Icons";
+import { IconChevron } from "../components/Icons";
 import { ArpForms } from "../components/ArpForms";
+import { ChordView } from "../components/ChordView";
 import { PieceProgress } from "../components/PieceProgress";
 import { KEYS, pretty } from "../data/curriculum";
 import { enharmonic, keyScales } from "../lib/arpeggios";
@@ -60,20 +61,13 @@ export function Today() {
                   <div className="block-title">{b.ttl}</div>
                   {b.piece && <PieceProgress id={b.piece} title={b.ttl} showBars />}
                   <p className="block-detail">{b.det}</p>
-                  {b.links && (
-                    <ul className="links">
-                      {b.links.map((l) => (
-                        <li key={l.url}>
-                          <a className="link" href={l.url} target="_blank" rel="noopener">{l.l} <IconExternal /></a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                   {b.rot && b.keys && (
                     <KeyRows state={state} block={b} showForms={showForms} setShowForms={setShowForms} />
                   )}
                 </div>
-                {showForms && b.keys?.includes(showForms) && <div className="block-forms"><ArpForms k={showForms} /></div>}
+                {b.rot && b.keys?.map((k) => showForms === `${b.rot}:${k}` && (
+                  <div key={k} className="block-forms">{b.rot === "chord" ? <ChordView k={k} /> : <ArpForms k={k} />}</div>
+                ))}
               </li>
             );
           })}
@@ -82,7 +76,7 @@ export function Today() {
       </section>
 
       <p className="footnote">
-        Scales and arpeggios cover two keys a day around the circle of fifths (C, G, D, … F). Tick each key when you finish it; a key
+        Each technique block has its own rotation around the circle of fifths (C, G, D, … F): scales and chords one key a day, arpeggios two. Tick each key when you finish it; a key
         you don't tick comes up first the next day, so none is skipped. Melodic minor shows the way up and comes down natural (with the natural-minor fingering). Fingers are one octave, right hand / left hand, with thumbs highlighted: over more octaves, keep the thumbs on the same notes and only the very top (RH) and bottom (LH) note takes the 4 or 5. The étude and new piece are the first unchecked items in your
         current stage, so ticking them off on the Path tab moves today's plan forward. (The étude is hidden for now.) Everything you tick
         is added to today's entry in the Log automatically.
@@ -128,7 +122,7 @@ function KeyRows({ state, block, showForms, setShowForms }: {
             <Check checked={isDone} label={`Mark ${pretty(k)} done`} onToggle={() => setKeysDone(rot, [k], !isDone, keys)} />
             <div className="key-row-body">
               <div className="key-row-title">
-                {rot === "scale" ? `${pretty(k)} major / ${info.m} minor` : `${pretty(k)} major`}
+                {rot === "arp" ? `${pretty(k)} major` : `${pretty(k)} major / ${info.m} minor`}
                 {rot === "arp" && state.arps[k] !== "solid" && <span className="key-row-tag">hands separately</span>}
               </div>
               {rot === "scale" ? (
@@ -141,8 +135,8 @@ function KeyRows({ state, block, showForms, setShowForms }: {
                   ))}
                 </ol>
               ) : (
-                <button type="button" className="disclose" aria-expanded={showForms === k} onClick={() => setShowForms(showForms === k ? null : k)}>
-                  {showForms === k ? "Hide" : "Show"} the 11 forms in {pretty(k)}
+                <button type="button" className="disclose" aria-expanded={showForms === `${rot}:${k}`} onClick={() => setShowForms(showForms === `${rot}:${k}` ? null : `${rot}:${k}`)}>
+                  {showForms === `${rot}:${k}` ? "Hide" : "Show"} {rot === "chord" ? `the chords in ${pretty(k)} major / ${info.m} minor` : `the 11 forms in ${pretty(k)}`}
                   <IconChevron width={16} height={16} />
                 </button>
               )}

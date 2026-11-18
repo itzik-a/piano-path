@@ -1,6 +1,6 @@
 import { KEYS, LAST_STEP, pretty } from "../data/curriculum";
 import { todaysPlan } from "../lib/plan";
-import { update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
+import { ROTS, update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
 
 export const setMinutes = (m: number) => update((s) => { s.settings.minutes = m; });
 
@@ -69,7 +69,10 @@ export function setPieceBars(id: string, bars: string) {
   update((s) => { s.pieces[id] = { step: s.pieces[id]?.step ?? 0, bars: bars.trim() }; });
 }
 
-/** Tick or untick keys in today's scale or arpeggio rotation. The block is done when all of today's keys are ticked. */
+/** Tick or untick keys in today's scale, arpeggio or chord rotation. The block is done when all of today's keys are ticked. */
+/** The Today block each rotation belongs to. */
+const ROT_BLOCK: Record<Rot, string> = { scale: "warm", arp: "arp", chord: "chord" };
+
 export function setKeysDone(rot: Rot, keys: string[], done: boolean, todayKeys: string[]) {
   update((s) => {
     const d = todayStr();
@@ -77,7 +80,7 @@ export function setKeysDone(rot: Rot, keys: string[], done: boolean, todayKeys: 
     const day = s.rot.day!;
     day[rot] = done ? [...new Set([...day[rot], ...keys])] : day[rot].filter((k) => !keys.includes(k));
     if (!s.today || s.today.date !== d) s.today = { date: d, done: {} };
-    const id = rot === "scale" ? "warm" : "arp";
+    const id = ROT_BLOCK[rot];
     if (todayKeys.every((k) => day[rot].includes(k))) s.today.done[id] = true;
     else delete s.today.done[id];
     autoLog(s);
@@ -89,9 +92,9 @@ function rollRotation(s: AppState, d: string) {
   const day = s.rot.day;
   if (day && day.d === d) return;
   if (day && day.d < d) {
-    (["scale", "arp"] as Rot[]).forEach((r) => day[r].forEach((k) => { s.rot.n[r][k] = (s.rot.n[r][k] || 0) + 1; }));
+    ROTS.forEach((r) => day[r].forEach((k) => { s.rot.n[r][k] = (s.rot.n[r][k] || 0) + 1; }));
   }
-  s.rot.day = { d, scale: [], arp: [] };
+  s.rot.day = { d, scale: [], arp: [], chord: [] };
 }
 
 /** Keep today's automatic log entry in step with what's ticked on Today: one entry per day,
@@ -108,7 +111,7 @@ function autoLog(s: AppState) {
       const keys = b.keys.filter((k) => day?.[b.rot!].includes(k));
       if (!keys.length) continue;
       min += (b.min * keys.length) / b.keys.length;
-      const names = keys.map((k) => b.rot === "scale" ? `${pretty(k)} major / ${KEYS.find((o) => o.k === k)!.m} minor` : pretty(k));
+      const names = keys.map((k) => b.rot !== "arp" ? `${pretty(k)} major / ${KEYS.find((o) => o.k === k)!.m} minor` : pretty(k));
       parts.push(`${b.cat}: ${names.join(", ")}`);
     } else if (done[b.id]) {
       min += b.min;

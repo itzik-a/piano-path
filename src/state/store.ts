@@ -25,12 +25,13 @@ export interface PieceProgress {
   bars?: string;
 }
 
-export type Rot = "scale" | "arp";
+export type Rot = "scale" | "arp" | "chord";
+export const ROTS: Rot[] = ["scale", "arp", "chord"];
 
-/** Two-keys-a-day rotation: how many times each key has been ticked (n), plus the latest day's ticks. */
+/** Daily key rotations (scales, arpeggios, chords): how many times each key has been ticked (n), plus the latest day's ticks. */
 export interface Rotation {
   n: Record<Rot, Record<string, number>>;
-  day: { d: string; scale: string[]; arp: string[] } | null;
+  day: ({ d: string } & Record<Rot, string[]>) | null;
 }
 
 export interface AppState {
@@ -62,7 +63,7 @@ export function defaults(): AppState {
     arps[o.k] = i < 6 ? "solid" : "none";
     scales[o.k] = { maj: 95, nat: 95, harm: 0, mel: 0 };
   });
-  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {} }, day: null }, updatedAt: 0 };
+  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {}, chord: {} }, day: null }, updatedAt: 0 };
 }
 
 export function normalize(s: unknown): AppState {
@@ -80,7 +81,10 @@ export function normalize(s: unknown): AppState {
     log: Array.isArray(x.log) ? x.log : [],
     logDeleted: Array.isArray(x.logDeleted) ? x.logDeleted : [],
     today: x.today || null,
-    rot: x.rot ? { n: { scale: x.rot.n?.scale || {}, arp: x.rot.n?.arp || {} }, day: x.rot.day || null } : d.rot,
+    rot: x.rot ? {
+      n: { scale: x.rot.n?.scale || {}, arp: x.rot.n?.arp || {}, chord: x.rot.n?.chord || {} },
+      day: x.rot.day ? { ...x.rot.day, scale: x.rot.day.scale || [], arp: x.rot.day.arp || [], chord: x.rot.day.chord || [] } : null,
+    } : d.rot,
     updatedAt: x.updatedAt || 0,
   };
 }

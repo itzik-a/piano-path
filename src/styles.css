@@ -195,8 +195,6 @@ button { cursor: pointer; }
 .ring-label b { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .ring-label span { font-size: .7rem; color: var(--muted); }
 
-.links { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; }
-.links .link { min-height: 40px; margin-top: 0; }
 .link { display: inline-flex; align-items: center; gap: 4px; font-size: .84rem; font-weight: 500; margin-top: 4px; min-height: 28px; }
 
 /* ---------- Top bar ---------- */
@@ -589,3 +587,18 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .step-label b { color: var(--ink); font-weight: 600; }
 .bars { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); max-width: 200px; }
 .block.done .piece-progress { opacity: 1; }
+
+/* ---------- Chords ---------- */
+.chords { display: grid; gap: 12px; }
+.chord-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.cg { display: grid; align-items: start; column-gap: 4px; row-gap: 2px; text-align: center; font-variant-numeric: tabular-nums; }
+.cg-roman { font-size: .72rem; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-name { font-size: .74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+.cg-n { font-weight: 600; font-size: .92rem; line-height: 1.35; white-space: nowrap; }
+.cg-n sup { font: 600 .62rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); margin-left: 1px; }
+.cg-n small { display: block; font-size: .66rem; font-weight: 400; color: var(--muted); line-height: 1.1; }
+.cg-h { font-size: .68rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-align: left; line-height: 1.9; }
+.cg-fingers { font-size: .8rem; color: var(--muted); }
+.cg-fingers b { font: 600 .82rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); white-space: nowrap; }
+.cadences { display: grid; gap: 14px; }
+.cadence h4 { margin: 0 0 6px; font-size: .86rem; font-weight: 600; }

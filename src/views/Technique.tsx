@@ -1,9 +1,10 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { KEYS, NEW_ARP_ORDER, pretty } from "../data/curriculum";
 import { ArpForms } from "../components/ArpForms";
+import { ChordView } from "../components/ChordView";
 import { useAppState, type ArpStatus, type ScaleForm } from "../state/store";
 import { cycleArp, setTempo } from "../state/actions";
-import { arpCount } from "../lib/plan";
+import { arpCount, rotationKeys } from "../lib/plan";
 
 const LABEL: Record<ArpStatus, string> = { solid: "Solid", learning: "Learning", none: "Not yet" };
 const FORMS: { f: ScaleForm; l: string }[] = [
@@ -71,6 +72,8 @@ export function Technique() {
     () => KEYS.find((o) => state.arps[o.k] === "learning")?.k ?? NEW_ARP_ORDER.find((k) => state.arps[k] === "none") ?? "C",
   );
   const formInfo = KEYS.find((o) => o.k === formKey)!;
+  const [chordKey, setChordKey] = useState(() => rotationKeys(state, "chord", 1)[0].k);
+  const chordInfo = KEYS.find((o) => o.k === chordKey)!;
   return (
     <>
       <header className="page-head">
@@ -112,6 +115,25 @@ export function Technique() {
           ascending; type your own and it syncs with your progress.
         </p>
         <ArpForms k={formKey} />
+      </section>
+
+      <section className="card">
+        <h2>Chords in {pretty(chordKey)} major / {chordInfo.m} minor</h2>
+        <div className="key-picker" role="group" aria-label="Choose a key for chords">
+          {KEYS.map((o) => (
+            <button
+              type="button" key={o.k} className="key-chip" aria-pressed={o.k === chordKey}
+              aria-label={`${pretty(o.k)} major / ${o.m} minor`} onClick={() => setChordKey(o.k)}
+            >
+              {pretty(o.k)}
+            </button>
+          ))}
+        </div>
+        <p className="muted small">
+          The chord on every step of the scale, in every inversion. Minor uses the harmonic minor&apos;s raised 7th in V and vii° (III stays major).
+          Right hand plays the chord, left hand the bass note.
+        </p>
+        <ChordView k={chordKey} />
       </section>
 
       <section className="card">

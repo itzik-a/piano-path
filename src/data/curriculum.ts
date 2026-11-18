@@ -1,6 +1,6 @@
 /* The curriculum. NEVER rename or reuse an item `id`: saved progress is keyed by it. */
 
-export type Category = "T" | "E" | "R" | "H" | "S";
+export type Category = "T" | "E" | "R" | "H";
 
 export interface Item {
   id: string;
@@ -11,17 +11,10 @@ export interface Item {
   d?: string;
   /** IMSLP page title, e.g. "Preludes, Op.28 (Chopin, Frédéric)" (search URLs hit a bot check) */
   q?: string;
-  /** free sheet-music links (used for sight-reading) */
-  links?: Link[];
   /** repertoire: title in Keep up once finished (defaults to `t`) */
   keep?: string;
 }
 
-export interface Link {
-  /** label */
-  l: string;
-  url: string;
-}
 
 export interface Stage {
   n: number;
@@ -49,11 +42,9 @@ export const NEW_ARP_ORDER = ["F", "F#", "Db", "Ab", "Eb", "Bb"];
 
 export const pretty = (k: string) => k.replace("#", "♯").replace(/^([A-G])b$/, "$1♭");
 export const imslp = (page: string) => "https://imslp.org/wiki/" + encodeURI(page.replace(/ /g, "_"));
-const im = (l: string, q: string): Link => ({ l, url: imslp(q) });
-const MUTOPIA: Link = { l: "Mutopia Project: free scores", url: "https://www.mutopiaproject.org/" };
 
 export const CAT: Record<Category, string> = {
-  T: "Technique", E: "Études", R: "Repertoire", H: "Theory", S: "Sight-reading",
+  T: "Technique", E: "Études", R: "Repertoire", H: "Theory",
 };
 
 export const STAGES: Stage[] = [
@@ -76,12 +67,6 @@ export const STAGES: Stage[] = [
       { id: "s1r4", c: "R", t: "Schumann Album for the Young Op. 68 No. 10, The Happy Farmer", d: "Sing the left-hand tune over a soft right hand.", q: "Album für die Jugend, Op.68 (Schumann, Robert)" },
       { id: "s1h1", c: "H", t: "Key signatures and the circle of fifths by heart", d: "Say the signature for any key in under two seconds." },
       { id: "s1h2", c: "H", t: "Primary chords I, IV, V and V7 in every major key", d: "Then find them in both of your waltzes." },
-      { id: "s1s1", c: "S", t: "Sight-read 5 minutes a day", d: "Choose music a level below what you play, and keep going without stopping.", links: [
-        im("Gurlitt, The First Lessons, Op. 117", "Anfangs-Stunden, Op.117 (Gurlitt, Cornelius)"),
-        im("Türk, 120 Handstücke (on his IMSLP page)", "Category:Türk, Daniel Gottlob"),
-        im("Notebooks for Anna Magdalena Bach (Bach, Johann Sebastian)", "Notebooks for Anna Magdalena Bach (Bach, Johann Sebastian)"),
-        MUTOPIA,
-      ] },
     ],
   },
   {
@@ -103,10 +88,6 @@ export const STAGES: Stage[] = [
       { id: "s2r5", c: "R", t: "Grieg Lyric Pieces Op. 12 No. 1, Arietta", q: "Lyric Pieces, Op.12 (Grieg, Edvard)" },
       { id: "s2h1", c: "H", t: "Diminished 7th chords and how they resolve" },
       { id: "s2h2", c: "H", t: "Harmonic analysis of the B minor Waltz, Op. 69 No. 2", d: "Mark each chord in your score with a Roman numeral." },
-      { id: "s2s1", c: "S", t: "Sight-read four-part chorales or hymns", links: [
-        im("Bach, 371 four-part chorales", "371 Vierstimmige Choralgesänge (Bach, Johann Sebastian)"),
-        { l: "Hymnary.org: free hymn scores", url: "https://hymnary.org/" },
-      ] },
     ],
   },
   {
@@ -127,12 +108,6 @@ export const STAGES: Stage[] = [
       { id: "s3r5", c: "R", t: "Grieg Lyric Pieces Op. 12 No. 2, Waltz", q: "Lyric Pieces, Op.12 (Grieg, Edvard)" },
       { id: "s3r6", c: "R", t: "Mendelssohn Song Without Words Op. 30 No. 3", q: "Lieder ohne Worte, Op.30 (Mendelssohn, Felix)" },
       { id: "s3h1", c: "H", t: "Modulation: find every key change in the C♯ minor Waltz" },
-      { id: "s3s1", c: "S", t: "Sight-read song accompaniments and easy chamber parts", links: [
-        im("Schubert, Winterreise (song accompaniments)", "Winterreise, D.911 (Schubert, Franz)"),
-        im("Schumann, Dichterliebe, Op. 48", "Dichterliebe, Op.48 (Schumann, Robert)"),
-        im("Diabelli, Melodious Exercises for 4 hands, Op. 149", "28 Melodische Übungsstücke, Op.149 (Diabelli, Anton)"),
-        MUTOPIA,
-      ] },
     ],
   },
   {
@@ -151,12 +126,6 @@ export const STAGES: Stage[] = [
       { id: "s4r5", c: "R", t: "Schubert Impromptu in A♭ major, Op. 142 No. 2 (D. 935)", q: "4 Impromptus, D.935 (Schubert, Franz)" },
       { id: "s4r6", c: "R", t: "Debussy, Rêverie", q: "Rêverie (Debussy, Claude)" },
       { id: "s4h1", c: "H", t: "Form: binary, ternary and rondo; map each piece you play" },
-      { id: "s4s1", c: "S", t: "Sight-read Stage 2 pieces fluently", links: [
-        im("Schumann, Album for the Young, Op. 68", "Album für die Jugend, Op.68 (Schumann, Robert)"),
-        im("Tchaikovsky, Album for the Young, Op. 39", "Children's Album, Op.39 (Tchaikovsky, Pyotr)"),
-        im("Grieg, Lyric Pieces, Op. 12", "Lyric Pieces, Op.12 (Grieg, Edvard)"),
-        im("Burgmüller, 18 Études, Op. 109", "18 Études, Op.109 (Burgmüller, Friedrich)"),
-      ] },
     ],
   },
 ];

@@ -7,7 +7,7 @@ import { stageProgress } from "../lib/plan";
 import { Bar, Check } from "../components/ui";
 import { IconChevron, IconExternal } from "../components/Icons";
 
-const ORDER: Category[] = ["T", "E", "R", "H", "S"];
+const ORDER: Category[] = ["T", "E", "R", "H"];
 
 export function Path({ go }: { go: (v: string) => void }) {
   const state = useAppState();
@@ -71,15 +71,6 @@ export function Path({ go }: { go: (v: string) => void }) {
                                   <a className="link" href={imslp(i.q)} target="_blank" rel="noopener">
                                     Free score on IMSLP <IconExternal />
                                   </a>
-                                )}
-                                {i.links && (
-                                  <ul className="links">
-                                    {i.links.map((l) => (
-                                      <li key={l.url}>
-                                        <a className="link" href={l.url} target="_blank" rel="noopener">{l.l} <IconExternal /></a>
-                                      </li>
-                                    ))}
-                                  </ul>
                                 )}
                               </div>
                             </li>
