@@ -13,9 +13,13 @@ import type { AppState } from "../state/store";
 export function Today() {
   const state = useAppState();
   const [showForms, setShowForms] = useState<string | null>(null);
-  const { st, blocks, total } = todaysPlan(state);
+  const { st, blocks } = todaysPlan(state);
   const done = todayDone(state);
-  const doneMin = blocks.filter((b) => done[b.id]).reduce((a, b) => a + b.min, 0);
+  // Ring counts tickable items: each key in the scale and arpeggio rotations, plus every other block.
+  const items = blocks.reduce((a, b) => a + (b.keys ? b.keys.length : 1), 0);
+  const tickedItems = blocks.reduce(
+    (a, b) => a + (b.rot && b.keys ? ticked(state, b.rot).filter((k) => b.keys!.includes(k)).length : done[b.id] ? 1 : 0), 0,
+  );
   const sp = stageProgress(state, st);
   const date = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 
@@ -32,9 +36,9 @@ export function Today() {
           <p className="eyebrow">{date}</p>
           <h1 className="display">Stage {st.n}<span className="dim"> · </span>{st.name}</h1>
         </div>
-        <Ring value={total ? doneMin / total : 0} size={96} stroke={9}>
-          <b>{doneMin}</b>
-          <span>of {total} min</span>
+        <Ring value={items ? tickedItems / items : 0} size={96} stroke={9}>
+          <b>{tickedItems}</b>
+          <span>of {items} done</span>
         </Ring>
         <div className="pills">
           <span className="pill">{sp.d}/{sp.n} stage items</span>
