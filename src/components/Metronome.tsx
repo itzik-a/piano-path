@@ -1,8 +1,8 @@
-/* Floating metronome: a compact pill (beat dots, tempo, play) that expands
-   into a panel with tempo controls, beats per bar and tap tempo. */
+/* Floating metronome: a round bubble at the bottom left (tempo, pulses on each beat while playing)
+   that opens a panel with play, tempo controls, beats per bar and tap tempo. */
 import { useEffect, useRef, useState } from "react";
 import { click, ensureCtx } from "../lib/audio";
-import { IconChevron, IconMinus, IconPause, IconPlay, IconPlus } from "./Icons";
+import { IconMetronome, IconMinus, IconPause, IconPlay, IconPlus } from "./Icons";
 import { Seg } from "./ui";
 
 const PREFS = "pianoPath.metronome";
@@ -23,6 +23,8 @@ export function Metronome() {
   const [beat, setBeat] = useState(-1);
   const [open, setOpen] = useState(false);
   const [noAudio, setNoAudio] = useState(false);
+  const [pulse, setPulse] = useState(0);
+  const box = useRef<HTMLElement>(null);
 
   // Scheduler state lives in a ref so tempo changes apply without restarting.
   const r = useRef({ bpm, beats, next: 0, beat: 0, iv: 0 as unknown as ReturnType<typeof setInterval>, taps: [] as number[] });
@@ -31,6 +33,16 @@ export function Metronome() {
 
   useEffect(() => { localStorage.setItem(PREFS, JSON.stringify({ bpm, beats })); }, [bpm, beats]);
   useEffect(() => () => clearInterval(r.current.iv), []);
+
+  // Close the panel on a tap outside it or on Escape (the metronome keeps playing).
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
+  }, [open]);
 
   const setBpm = (v: number) => setPrefs((p) => ({ ...p, bpm: clampBpm(v) }));
   const setBeats = (b: number) => { r.current.beat = 0; setPrefs((p) => ({ ...p, beats: b })); };
@@ -51,7 +63,7 @@ export function Metronome() {
       while (s.next < c.currentTime + 0.12) {
         const b = s.beat, when = s.next;
         click(c, when, b === 0 && s.beats > 1);
-        setTimeout(() => setBeat(b), Math.max(0, (when - c.currentTime) * 1000));
+        setTimeout(() => { setBeat(b); setPulse((n) => n + 1); }, Math.max(0, (when - c.currentTime) * 1000));
         s.beat = (s.beat + 1) % s.beats;
         s.next += 60 / s.bpm;
       }
@@ -81,10 +93,20 @@ export function Metronome() {
     </div>
   );
 
+  const playBtn = (
+    <button type="button" className="play-btn" aria-label={on ? "Stop metronome" : noAudio ? "No audio available" : "Start metronome"} onClick={toggle}>
+      {on ? <IconPause /> : <IconPlay />}
+    </button>
+  );
+
   return (
-    <aside className={`metro ${open ? "open" : ""} ${on ? "playing" : ""}`} aria-label="Metronome">
+    <aside ref={box} className={`metro ${open ? "open" : ""} ${on ? "playing" : ""}`} aria-label="Metronome">
       {open && (
         <div className="metro-panel" id="metro-panel">
+          <div className="metro-bar">
+            {dots}
+            {playBtn}
+          </div>
           <div className="metro-tempo">
             <button type="button" className="icon-btn" aria-label="Slower" onClick={() => setBpm(bpm - 1)}><IconMinus /></button>
             <div className="metro-bpm"><output aria-live="polite">{bpm}</output><span>bpm</span></div>
@@ -97,16 +119,15 @@ export function Metronome() {
           </div>
         </div>
       )}
-      <div className="metro-bar">
-        <button type="button" className="metro-summary" aria-expanded={open} aria-controls="metro-panel" onClick={() => setOpen(!open)}>
-          {dots}
-          <span className="metro-readout"><b>{bpm}</b> bpm</span>
-          <IconChevron className="chev" width={18} height={18} />
-        </button>
-        <button type="button" className="play-btn" aria-label={on ? "Stop metronome" : noAudio ? "No audio available" : "Start metronome"} onClick={toggle}>
-          {on ? <IconPause /> : <IconPlay />}
-        </button>
-      </div>
+      <button
+        type="button" className="metro-bubble" aria-expanded={open} aria-controls="metro-panel"
+        aria-label={`Metronome, ${bpm} bpm${on ? ", playing" : ""}. ${open ? "Close" : "Open"} controls.`}
+        onClick={() => setOpen(!open)}
+      >
+        {on && <span key={pulse} className={`metro-pulse ${beat === 0 && beats > 1 ? "down" : ""}`} aria-hidden="true" />}
+        <IconMetronome width={20} height={20} />
+        <b>{bpm}</b>
+      </button>
     </aside>
   );
 }

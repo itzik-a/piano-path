@@ -83,7 +83,7 @@ body {
   line-height: 1.5;
   letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--tabbar-h) + 84px + env(safe-area-inset-bottom));
 }
 h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; font-family: var(--font-display); }
 h2 { font-size: 1.12rem; font-weight: 650; letter-spacing: -0.015em; }
@@ -253,7 +253,7 @@ button { cursor: pointer; }
 .blocks { display: grid; gap: 8px; counter-reset: b; }
 .block {
   position: relative; overflow: hidden;
-  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start;
+  display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
   padding: 14px; border-radius: var(--radius-sm);
   background: var(--surface-2);
   transition: background .2s, opacity .2s, box-shadow .2s;
@@ -413,6 +413,16 @@ button { cursor: pointer; }
 @media (max-width: 600px) {
   .quick-forms.scale-list li { grid-template-columns: 1fr; row-gap: 1px; }
 }
+/* Scale notes with RH / LH fingers aligned under each note */
+.sf {
+  display: grid; grid-template-columns: 1.9em repeat(8, minmax(1.55em, 2.4em)); justify-content: start;
+  align-items: start; row-gap: 1px; text-align: center; font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+.sf-h { font-size: .68rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-align: left; line-height: 1.6; }
+.sf-n { font-weight: 500; color: var(--ink); white-space: nowrap; line-height: 1.3; }
+.sf-n small { display: block; font-size: .68rem; color: var(--muted); line-height: 1.1; }
+.sf-f { font: 500 .82rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); line-height: 1.6; }
+.sf-f.thumb { color: var(--accent); font-weight: 700; }
 .block-forms { grid-column: 1 / -1; margin: 0 -4px; padding: 4px 14px; border-radius: var(--radius-sm); background: var(--surface); }
 .block.done .block-forms { opacity: 1; }
 
@@ -448,26 +458,36 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 /* ---------- Metronome ---------- */
 .metro {
   position: fixed; z-index: 9;
-  left: 12px; right: 12px;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 10px);
-  max-width: 440px; margin: 0 auto;
-  background: var(--glass);
+  left: calc(12px + env(safe-area-inset-left));
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px);
+}
+.metro-bubble {
+  position: relative; width: 58px; height: 58px;
+  display: grid; place-content: center; justify-items: center; gap: 1px;
+  border: 1px solid var(--glass-line); border-radius: 50%;
+  background: var(--glass); color: var(--ink);
   -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
-  border: 1px solid var(--glass-line);
-  border-radius: 28px;
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  transition: transform .12s, background .2s, color .2s;
 }
-.metro-bar { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 8px; }
-.metro-summary {
-  flex: 1; min-width: 0; min-height: 44px;
-  display: flex; align-items: center; gap: 12px;
-  border: 0; background: none; padding: 0 8px; border-radius: 20px; text-align: left;
+.metro-bubble:active { transform: scale(.92); }
+.metro-bubble svg { color: var(--muted); }
+.metro-bubble b { font-family: var(--font-display); font-size: .9rem; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.metro.playing .metro-bubble { background: linear-gradient(180deg, var(--accent-2), var(--accent)); color: var(--on-accent); border-color: transparent; }
+.metro.playing .metro-bubble svg { color: var(--on-accent); }
+.metro-pulse {
+  position: absolute; inset: -1px; border-radius: 50%; pointer-events: none;
+  box-shadow: 0 0 0 2px var(--accent); animation: metro-pulse .45s ease-out forwards;
 }
-.metro-readout { font-size: .85rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.metro-readout b { font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); letter-spacing: -0.02em; }
-.metro-summary .chev { margin-left: auto; color: var(--muted); transform: rotate(180deg); transition: transform .2s; }
-.metro.open .metro-summary .chev { transform: none; }
+.metro-pulse.down { box-shadow: 0 0 0 3px var(--accent); }
+@keyframes metro-pulse { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.35); } }
+.metro-panel {
+  position: absolute; left: 0; bottom: calc(100% + 10px);
+  width: min(380px, calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  background: var(--raised);
+  border: 1px solid var(--glass-line); border-radius: 24px; box-shadow: var(--shadow-lg);
+}
+.metro-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .play-btn {
   width: 44px; height: 44px; flex: none;
   display: grid; place-items: center;
@@ -481,7 +501,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 .beats i { width: 9px; height: 9px; border-radius: 50%; background: var(--track); display: block; transition: background .06s, transform .06s; }
 .beats i.accent { box-shadow: inset 0 0 0 1.5px var(--muted); }
 .beats i.on { background: var(--accent); box-shadow: none; transform: scale(1.25); }
-.metro-panel { display: grid; gap: 14px; padding: 16px 16px 6px; animation: fade .2s ease-out; }
+.metro-panel { display: grid; gap: 14px; padding: 14px 16px 12px; animation: fade .2s ease-out; }
 .metro-tempo { display: flex; align-items: center; justify-content: space-between; }
 .metro-bpm { display: flex; align-items: baseline; gap: 6px; }
 .metro-bpm output { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -534,7 +554,7 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
   .key-picker { margin: 0 -22px; padding: 2px 22px 4px; flex-wrap: wrap; overflow: visible; }
   .display { font-size: 2rem; }
   .hero .display { font-size: 1.75rem; }
-  .metro { left: auto; right: 24px; bottom: 24px; width: 360px; }
+  .metro { left: 24px; bottom: 24px; }
   .sheet { margin: auto; border-radius: 24px; }
   .sheet-grip { display: none; }
   .sheet-body { padding: 20px 24px 24px; }

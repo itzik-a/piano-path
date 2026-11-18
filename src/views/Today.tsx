@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useAppState } from "../state/store";
-import { markBlock, setKeysDone, setMinutes } from "../state/actions";
-import { arpCount, fmt, stageProgress, ticked, todayDone, todaysPlan, type Block } from "../lib/plan";
-import { clearTimerFor, toggleTimer, useTimer } from "../lib/timer";
-import { Check, Ring, Seg } from "../components/ui";
-import { IconChevron, IconExternal, IconPause, IconPlay, IconReset } from "../components/Icons";
+import { markBlock, setKeysDone } from "../state/actions";
+import { arpCount, stageProgress, ticked, todayDone, todaysPlan, type Block } from "../lib/plan";
+import { Check, Ring } from "../components/ui";
+import { IconChevron, IconExternal } from "../components/Icons";
 import { ArpForms } from "../components/ArpForms";
 import { PieceProgress } from "../components/PieceProgress";
 import { KEYS, pretty } from "../data/curriculum";
@@ -13,7 +12,6 @@ import type { AppState } from "../state/store";
 
 export function Today() {
   const state = useAppState();
-  const timer = useTimer();
   const [showForms, setShowForms] = useState<string | null>(null);
   const { st, blocks, total } = todaysPlan(state);
   const done = todayDone(state);
@@ -23,7 +21,6 @@ export function Today() {
 
   const toggleDone = (b: Block) => {
     const val = !done[b.id];
-    if (val) clearTimerFor(b.id);
     if (b.rot && b.keys) setKeysDone(b.rot, b.keys, val, b.keys);
     else markBlock(b.id, val);
   };
@@ -46,17 +43,13 @@ export function Today() {
       </section>
 
       <section className="card">
-        <div className="card-head">
-          <h2>Today's session</h2>
-          <Seg label="Practice length (minutes)" options={[30, 45, 60, 90]} value={state.settings.minutes} onChange={setMinutes} format={(m) => `${m}′`} />
-        </div>
+        <h2>Today's session</h2>
 
         <ol className="blocks">
           {blocks.map((b) => {
-            const active = timer.id === b.id;
             const isDone = !!done[b.id];
             return (
-              <li key={b.id} className={`block ${isDone ? "done" : ""} ${active ? "active" : ""}`}>
+              <li key={b.id} className={`block ${isDone ? "done" : ""}`}>
                 <Check checked={isDone} label={`Mark ${b.cat} done`} onToggle={() => toggleDone(b)} />
                 <div className="block-body">
                   <div className="eyebrow">{b.cat}</div>
@@ -76,26 +69,7 @@ export function Today() {
                     <KeyRows state={state} block={b} showForms={showForms} setShowForms={setShowForms} />
                   )}
                 </div>
-                <div className="block-side">
-                  <span className={active ? "timer" : "mins"}>{active ? fmt(timer.left) : `${b.min} min`}</span>
-                  {!isDone && (
-                    <button
-                      type="button"
-                      className={`icon-btn ${active && timer.running ? "on" : ""}`}
-                      aria-label={`${active && timer.running ? "Pause" : active ? "Resume" : "Start"} ${b.cat} timer`}
-                      onClick={() => toggleTimer(b.id, b.min)}
-                    >
-                      {active && timer.running ? <IconPause width={18} height={18} /> : <IconPlay width={18} height={18} />}
-                    </button>
-                  )}
-                  {active && (
-                    <button type="button" className="icon-btn" aria-label={`Reset ${b.cat} timer`} title="Reset timer" onClick={() => clearTimerFor(b.id)}>
-                      <IconReset width={18} height={18} />
-                    </button>
-                  )}
-                </div>
                 {showForms && b.keys?.includes(showForms) && <div className="block-forms"><ArpForms k={showForms} /></div>}
-                {active && <div className="block-progress" style={{ width: `${(1 - timer.left / timer.total) * 100}%` }} />}
               </li>
             );
           })}
@@ -105,7 +79,7 @@ export function Today() {
 
       <p className="footnote">
         Scales and arpeggios cover two keys a day around the circle of fifths (C, G, D, … F). Tick each key when you finish it; a key
-        you don't tick comes up first the next day, so none is skipped. Melodic minor shows the way up and comes down natural. The étude and new piece are the first unchecked items in your
+        you don't tick comes up first the next day, so none is skipped. Melodic minor shows the way up and comes down natural (with the natural-minor fingering). Fingers are one octave, right hand / left hand, with thumbs highlighted: over more octaves, keep the thumbs on the same notes and only the very top (RH) and bottom (LH) note takes the 4 or 5. The étude and new piece are the first unchecked items in your
         current stage, so ticking them off on the Path tab moves today's plan forward. (The étude is hidden for now.) Everything you tick
         is added to today's entry in the Log automatically.
       </p>
@@ -113,10 +87,25 @@ export function Today() {
   );
 }
 
-const n = (x: string) => {
-  const e = enharmonic(x);
-  return e ? `${x} (=${e})` : x;
-};
+/** Notes with the right- and left-hand finger under each one; thumbs are highlighted to show the crossings. */
+function ScaleFingering({ notes, rh, lh }: { notes: string[]; rh: string[]; lh: string[] }) {
+  const said = notes.map((x, i) => `${x} RH ${rh[i]} LH ${lh[i]}`).join(", ");
+  const row = (h: string, fs: string[]) => [
+    <span key={h} className="sf-h">{h}</span>,
+    ...fs.map((d, i) => <span key={h + i} className={d === "1" ? "sf-f thumb" : "sf-f"}>{d}</span>),
+  ];
+  return (
+    <div className="sf" role="img" aria-label={said}>
+      <span className="sf-h" />
+      {notes.map((x, i) => {
+        const e = enharmonic(x);
+        return <span key={i} className="sf-n">{x}{e && <small>={e}</small>}</span>;
+      })}
+      {row("RH", rh)}
+      {row("LH", lh)}
+    </div>
+  );
+}
 
 /** One row per key in the scale or arpeggio block, each with its own tick. */
 function KeyRows({ state, block, showForms, setShowForms }: {
@@ -143,7 +132,7 @@ function KeyRows({ state, block, showForms, setShowForms }: {
                   {keyScales(k).map((x) => (
                     <li key={x.f}>
                       <span className="qf-name">{x.minor ? `${info.m} ` : `${pretty(k)} `}{x.l.toLowerCase()} <small>{sc[x.f] || 80}</small></span>
-                      <span className="qf-notes">{x.notes.map(n).join(" ")}</span>
+                      <ScaleFingering notes={x.notes} rh={x.rh} lh={x.lh} />
                     </li>
                   ))}
                 </ol>

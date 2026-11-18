@@ -101,6 +101,33 @@ const SCALES: { l: string; minor: boolean; iv: string[] }[] = [
 ];
 export const SCALE_FORMS = ["maj", "nat", "harm", "mel"] as const;
 
+/** Standard one-octave fingerings, ascending, one digit per note: [RH, LH].
+    Thumbs fall on the same notes in every octave; the outer 5 (RH top, LH bottom) is only for the very first/last note.
+    Melodic is the way up; it comes down with the natural-minor fingering. */
+type Fing = [string, string];
+const WHITE: Fing = ["12312345", "54321321"]; // C, G, D, A, E majors; A, E, D, G, C minors
+const B_SHAPE: Fing = ["12312345", "43214321"]; // B major, B minor
+const F_SHAPE: Fing = ["12341234", "54321321"]; // F major, F minor
+const minor = (nat: Fing, harm = nat, mel = harm) => ({ nat, harm, mel });
+const SCALE_FINGERINGS: Record<string, Record<(typeof SCALE_FORMS)[number], Fing>> = {
+  C: { maj: WHITE, ...minor(WHITE) },
+  G: { maj: WHITE, ...minor(WHITE) },
+  D: { maj: WHITE, ...minor(B_SHAPE) },
+  A: { maj: WHITE, ...minor(["34123123", "43213214"], undefined, ["34123412", "43213214"]) }, // F♯ minor
+  E: { maj: WHITE, ...minor(["34123123", "32143213"], undefined, ["34123412", "32143213"]) }, // C♯ minor
+  B: { maj: B_SHAPE, ...minor(["34123123", "32132143"], ["34123123", "32143213"]) }, // G♯ minor: LH thumb moves to F𝄪
+  "F#": { maj: ["23412312", "43213214"], ...minor(["31234123", "21432132"]) }, // D♯ minor
+  Db: { maj: ["23123412", "32143213"], ...minor(["41231234", "21321432"]) }, // B♭ minor
+  Ab: { maj: ["34123123", "32143213"], ...minor(F_SHAPE) },
+  Eb: { maj: ["31234123", "32143213"], ...minor(WHITE) },
+  Bb: { maj: ["41231234", "32143213"], ...minor(WHITE) },
+  F: { maj: F_SHAPE, ...minor(WHITE) },
+};
+
 export function keyScales(key: string) {
-  return SCALES.map((sc, i) => ({ f: SCALE_FORMS[i], l: sc.l, minor: sc.minor, notes: sc.iv.map((iv) => noteAbove(key, iv)) }));
+  return SCALES.map((sc, i) => {
+    const f = SCALE_FORMS[i];
+    const [rh, lh] = SCALE_FINGERINGS[key][f];
+    return { f, l: sc.l, minor: sc.minor, notes: sc.iv.map((iv) => noteAbove(key, iv)), rh: [...rh], lh: [...lh] };
+  });
 }
