@@ -1,4 +1,4 @@
-import { KEYS, LAST_STEP, pretty } from "../data/curriculum";
+import { KEYS, LAST_STEP, chordItem, pretty } from "../data/curriculum";
 import { todaysPlan } from "../lib/plan";
 import { ROTS, update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
 
@@ -111,7 +111,8 @@ function autoLog(s: AppState) {
       const keys = b.keys.filter((k) => day?.[b.rot!].includes(k));
       if (!keys.length) continue;
       min += (b.min * keys.length) / b.keys.length;
-      const names = keys.map((k) => b.rot !== "arp" ? `${pretty(k)} major / ${KEYS.find((o) => o.k === k)!.m} minor` : pretty(k));
+      const names = keys.map((k) =>
+        b.rot === "chord" ? chordItem(k).name : b.rot === "scale" ? `${pretty(k)} major / ${KEYS.find((o) => o.k === k)!.m} minor` : pretty(k));
       parts.push(`${b.cat}: ${names.join(", ")}`);
     } else if (done[b.id]) {
       min += b.min;

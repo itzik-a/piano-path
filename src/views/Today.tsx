@@ -7,7 +7,7 @@ import { IconChevron } from "../components/Icons";
 import { ArpForms } from "../components/ArpForms";
 import { ChordView } from "../components/ChordView";
 import { PieceProgress } from "../components/PieceProgress";
-import { KEYS, pretty } from "../data/curriculum";
+import { KEYS, chordItem, pretty } from "../data/curriculum";
 import { enharmonic, keyScales } from "../lib/arpeggios";
 import type { AppState } from "../state/store";
 
@@ -16,7 +16,7 @@ export function Today() {
   const [showForms, setShowForms] = useState<string | null>(null);
   const { st, blocks } = todaysPlan(state);
   const done = todayDone(state);
-  // Ring counts tickable items: each key in the scale and arpeggio rotations, plus every other block.
+  // Ring counts tickable items: each key in the scale, arpeggio and chord rotations, plus every other block.
   const items = blocks.reduce((a, b) => a + (b.keys ? b.keys.length : 1), 0);
   const tickedItems = blocks.reduce(
     (a, b) => a + (b.rot && b.keys ? ticked(state, b.rot).filter((k) => b.keys!.includes(k)).length : done[b.id] ? 1 : 0), 0,
@@ -66,7 +66,7 @@ export function Today() {
                   )}
                 </div>
                 {b.rot && b.keys?.map((k) => showForms === `${b.rot}:${k}` && (
-                  <div key={k} className="block-forms">{b.rot === "chord" ? <ChordView k={k} /> : <ArpForms k={k} />}</div>
+                  <div key={k} className="block-forms">{b.rot === "chord" ? <ChordView k={chordItem(k).k} only={chordItem(k).mode} /> : <ArpForms k={k} />}</div>
                 ))}
               </li>
             );
@@ -76,7 +76,7 @@ export function Today() {
       </section>
 
       <p className="footnote">
-        Each technique block has its own rotation around the circle of fifths (C, G, D, … F): scales and chords one key a day, arpeggios two. Tick each key when you finish it; a key
+        Each technique block has its own rotation around the circle of fifths (C, G, D, … F): one key a day each. Chords take the major one day and its relative minor the next (C major, A minor, G major, E minor, …). Tick each key when you finish it; a key
         you don't tick comes up first the next day, so none is skipped. Melodic minor shows the way up and comes down natural (with the natural-minor fingering). Fingers are one octave, right hand / left hand, with thumbs highlighted: over more octaves, keep the thumbs on the same notes and only the very top (RH) and bottom (LH) note takes the 4 or 5. The étude and new piece are the first unchecked items in your
         current stage, so ticking them off on the Path tab moves today's plan forward. (The étude is hidden for now.) Everything you tick
         is added to today's entry in the Log automatically.
@@ -105,7 +105,7 @@ function ScaleFingering({ notes, rh, lh }: { notes: string[]; rh: string[]; lh: 
   );
 }
 
-/** One row per key in the scale or arpeggio block, each with its own tick. */
+/** One row per key in a rotation block (scales, arpeggios, chords), each with its own tick. */
 function KeyRows({ state, block, showForms, setShowForms }: {
   state: AppState; block: Block; showForms: string | null; setShowForms: (k: string | null) => void;
 }) {
@@ -114,15 +114,16 @@ function KeyRows({ state, block, showForms, setShowForms }: {
   return (
     <ul className="key-rows">
       {keys.map((k) => {
-        const info = KEYS.find((o) => o.k === k)!;
+        const chord = rot === "chord" ? chordItem(k) : null;
+        const info = KEYS.find((o) => o.k === (chord ? chord.k : k))!;
         const isDone = done.includes(k);
         const sc = state.scales[k] || { maj: 95, nat: 95, harm: 0, mel: 0 };
         return (
           <li key={k} className={`key-row ${isDone ? "done" : ""}`}>
-            <Check checked={isDone} label={`Mark ${pretty(k)} done`} onToggle={() => setKeysDone(rot, [k], !isDone, keys)} />
+            <Check checked={isDone} label={`Mark ${chord ? chord.name : pretty(k)} done`} onToggle={() => setKeysDone(rot, [k], !isDone, keys)} />
             <div className="key-row-body">
               <div className="key-row-title">
-                {rot === "arp" ? `${pretty(k)} major` : `${pretty(k)} major / ${info.m} minor`}
+                {chord ? chord.name : rot === "arp" ? `${pretty(k)} major` : `${pretty(k)} major / ${info.m} minor`}
                 {rot === "arp" && state.arps[k] !== "solid" && <span className="key-row-tag">hands separately</span>}
               </div>
               {rot === "scale" ? (
@@ -136,7 +137,7 @@ function KeyRows({ state, block, showForms, setShowForms }: {
                 </ol>
               ) : (
                 <button type="button" className="disclose" aria-expanded={showForms === `${rot}:${k}`} onClick={() => setShowForms(showForms === `${rot}:${k}` ? null : `${rot}:${k}`)}>
-                  {showForms === `${rot}:${k}` ? "Hide" : "Show"} {rot === "chord" ? `the chords in ${pretty(k)} major / ${info.m} minor` : `the 11 forms in ${pretty(k)}`}
+                  {showForms === `${rot}:${k}` ? "Hide" : "Show"} {chord ? `the chords in ${chord.name}` : `the 11 forms in ${pretty(k)}`}
                   <IconChevron width={16} height={16} />
                 </button>
               )}

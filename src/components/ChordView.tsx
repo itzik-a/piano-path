@@ -1,5 +1,5 @@
 /* Chords for one key (major and its relative minor): diatonic triads and 7ths in every inversion,
-   and two cadences voiced from each starting position. */
+   and two cadences voiced from each starting position. Pass `only` to show just the major or the minor (Today's rotation). */
 import { useState } from "react";
 import { KEYS, pretty } from "../data/curriculum";
 import { enharmonic } from "../lib/arpeggios";
@@ -19,9 +19,10 @@ function Note({ n, finger }: { n: string; finger?: string }) {
   );
 }
 
-export function ChordView({ k }: { k: string }) {
+export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
   const info = KEYS.find((o) => o.k === k)!;
-  const [mode, setMode] = useState<ChordMode>("major");
+  const [picked, setMode] = useState<ChordMode>("major");
+  const mode = only ?? picked;
   const [kind, setKindState] = useState<Kind>(() => (localStorage.getItem(KIND_KEY) as Kind) || "Triads");
   const [pos, setPos] = useState(0);
   const setKind = (v: Kind) => { setKindState(v); localStorage.setItem(KIND_KEY, v); if (v !== "7ths" && pos > 2) setPos(0); };
@@ -31,7 +32,7 @@ export function ChordView({ k }: { k: string }) {
   return (
     <div className="chords">
       <div className="chord-controls">
-        <Seg label="Key" options={["major", "minor"] as ChordMode[]} value={mode} onChange={setMode} format={modeName} />
+        {!only && <Seg label="Key" options={["major", "minor"] as ChordMode[]} value={mode} onChange={setMode} format={modeName} />}
         <Seg label="Chord type" options={["Triads", "7ths", "Cadences"] as Kind[]} value={kind} onChange={setKind} />
         <Seg
           label={kind === "Cadences" ? "Starting position" : "Inversion"} options={positions} value={pos} onChange={setPos}

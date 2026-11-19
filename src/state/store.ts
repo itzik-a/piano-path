@@ -66,6 +66,18 @@ export function defaults(): AppState {
   return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {}, chord: {} }, day: null }, updatedAt: 0 };
 }
 
+/* Chords used to rotate by key ("C" = C major and A minor together); now major and minor are separate
+   items ("C:maj", "C:min"). An old key entry counts for both. */
+function chordCounts(n: Record<string, number>) {
+  const out: Record<string, number> = {};
+  for (const [k, c] of Object.entries(n)) {
+    if (k.includes(":")) out[k] = (out[k] || 0) + c;
+    else [`${k}:maj`, `${k}:min`].forEach((id) => { out[id] = (out[id] || 0) + c; });
+  }
+  return out;
+}
+const chordTicks = (ids: string[]) => [...new Set(ids.flatMap((k) => (k.includes(":") ? [k] : [`${k}:maj`, `${k}:min`])))];
+
 export function normalize(s: unknown): AppState {
   const d = defaults();
   if (!s || typeof s !== "object") return d;
@@ -82,8 +94,8 @@ export function normalize(s: unknown): AppState {
     logDeleted: Array.isArray(x.logDeleted) ? x.logDeleted : [],
     today: x.today || null,
     rot: x.rot ? {
-      n: { scale: x.rot.n?.scale || {}, arp: x.rot.n?.arp || {}, chord: x.rot.n?.chord || {} },
-      day: x.rot.day ? { ...x.rot.day, scale: x.rot.day.scale || [], arp: x.rot.day.arp || [], chord: x.rot.day.chord || [] } : null,
+      n: { scale: x.rot.n?.scale || {}, arp: x.rot.n?.arp || {}, chord: chordCounts(x.rot.n?.chord || {}) },
+      day: x.rot.day ? { ...x.rot.day, scale: x.rot.day.scale || [], arp: x.rot.day.arp || [], chord: chordTicks(x.rot.day.chord || []) } : null,
     } : d.rot,
     updatedAt: x.updatedAt || 0,
   };

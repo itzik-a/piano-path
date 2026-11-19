@@ -41,7 +41,17 @@ export const KEYS: KeyInfo[] = [
 export const NEW_ARP_ORDER = ["F", "F#", "Db", "Ab", "Eb", "Bb"];
 
 export const pretty = (k: string) => k.replace("#", "♯").replace(/^([A-G])b$/, "$1♭");
-export const imslp = (page: string) => "https://imslp.org/wiki/" + encodeURI(page.replace(/ /g, "_"));
+
+/** The chord rotation: one key a day, major then its relative minor (C major, A minor, G major, E minor, …).
+    `id` is what the rotation stores: "<major key>:maj" or "<major key>:min". */
+export interface ChordItem { id: string; k: string; mode: "major" | "minor"; name: string }
+export const CHORD_ITEMS: ChordItem[] = KEYS.flatMap((o) => [
+  { id: `${o.k}:maj`, k: o.k, mode: "major" as const, name: `${pretty(o.k)} major` },
+  { id: `${o.k}:min`, k: o.k, mode: "minor" as const, name: `${o.m} minor` },
+]);
+export const chordItem = (id: string) => CHORD_ITEMS.find((c) => c.id === id)!;
+
+export const imslp =(page: string) => "https://imslp.org/wiki/" + encodeURI(page.replace(/ /g, "_"));
 
 export const CAT: Record<Category, string> = {
   T: "Technique", E: "Études", R: "Repertoire", H: "Theory",

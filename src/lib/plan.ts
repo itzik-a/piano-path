@@ -1,5 +1,5 @@
 /* Builds today's practice plan from the current stage and technique status. */
-import { KEYS, PIECE_STEPS, STAGES, maintained, pretty, type Stage } from "../data/curriculum";
+import { CHORD_ITEMS, KEYS, PIECE_STEPS, STAGES, maintained, pretty, type Stage } from "../data/curriculum";
 import { todayStr, type AppState, type Rot } from "../state/store";
 
 export interface Block {
@@ -8,7 +8,7 @@ export interface Block {
   ttl: string;
   det: string;
   min: number;
-  /** scale and arpeggio blocks: which rotation, and today's keys */
+  /** rotation blocks: which rotation, and today's keys (chord items are "C:maj" / "C:min") */
   rot?: Rot;
   keys?: string[];
   /** for the new-piece block: the repertoire item id */
@@ -36,14 +36,19 @@ function rotCounts(state: AppState, rot: Rot) {
   return n;
 }
 
-/** Today's keys (two by default): the least-practised keys, in circle-of-fifths order (C, G, D, … F).
-    A key you don't tick stays first in line, so it comes up again the next day. */
-export function rotationKeys(state: AppState, rot: Rot, count = 2) {
+/** The least-practised items, in list order; one you don't tick stays first in line, so it comes up again the next day. */
+function leastTicked<T>(state: AppState, rot: Rot, list: T[], id: (t: T) => string, count: number) {
   const n = rotCounts(state, rot);
-  return KEYS.map((o, i) => ({ o, i, c: n[o.k] || 0 }))
+  return list.map((o, i) => ({ o, i, c: n[id(o)] || 0 }))
     .sort((a, b) => a.c - b.c || a.i - b.i)
     .slice(0, count).map((x) => x.o);
 }
+
+/** Today's scale or arpeggio keys (one by default), in circle-of-fifths order (C, G, D, … F). */
+export const rotationKeys = (state: AppState, rot: "scale" | "arp", count = 1) => leastTicked(state, rot, KEYS, (o) => o.k, count);
+
+/** Today's chord items: major, then its relative minor, around the circle (C major, A minor, G major, …). */
+export const chordRotation = (state: AppState, count = 1) => leastTicked(state, "chord", CHORD_ITEMS, (c) => c.id, count);
 
 /** Keys ticked today in a rotation. */
 export function ticked(state: AppState, rot: Rot): string[] {
@@ -59,8 +64,8 @@ export function todaysPlan(state: AppState) {
   const M = state.settings.minutes || 45;
   const day = Math.floor(new Date(todayStr()).getTime() / 864e5);
   const scaleKeys = rotationKeys(state, "scale", 1); // one major key and its relative minor a day
-  const arpKeys = rotationKeys(state, "arp");
-  const chordKeys = rotationKeys(state, "chord", 1); // chords: one key a day, at their own pace
+  const arpKeys = rotationKeys(state, "arp", 1); // one arpeggio key a day
+  const chordItems = chordRotation(state, 1); // chords: one major or minor key a day, at their own pace
   const notSolid = arpKeys.filter((o) => state.arps[o.k] !== "solid");
 
   const open = (c: string) => st.items.filter((i) => i.c === c && !state.checks[i.id]);
@@ -82,8 +87,8 @@ export function todaysPlan(state: AppState) {
       det: `Hands together. Tick a key once you've played all four of its scales; a key you don't tick moves to tomorrow.${techOpen[0] ? " Then a few minutes on: " + techOpen[0].t + "." : ""}`,
     },
     {
-      id: "chord", cat: "Chords", min: mins.chord, rot: "chord", keys: chordKeys.map((o) => o.k),
-      ttl: chordKeys.map((o) => `${pretty(o.k)} major / ${o.m} minor`).join(", then "),
+      id: "chord", cat: "Chords", min: mins.chord, rot: "chord", keys: chordItems.map((c) => c.id),
+      ttl: chordItems.map((c) => c.name).join(", then "),
       det: "Right hand plays the chord, left hand the bass note. Triads up the scale in each position, then the 7ths and the two cadences from each starting position. Tick the key once it's all done; if you don't, it stays for tomorrow.",
     },
     {
