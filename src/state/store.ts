@@ -10,7 +10,10 @@ export type ScaleForm = "maj" | "nat" | "harm" | "mel";
 export interface LogEntry {
   /** date, YYYY-MM-DD */
   d: string;
-  min: number;
+  /** items ticked (auto entries); older entries have only `min` */
+  n?: number;
+  /** minutes, from before practice became item based (no longer written) */
+  min?: number;
   note: string;
   items: string;
   ts: number;

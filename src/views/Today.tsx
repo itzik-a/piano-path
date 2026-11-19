@@ -8,7 +8,8 @@ import { ArpForms } from "../components/ArpForms";
 import { ChordView } from "../components/ChordView";
 import { PieceProgress } from "../components/PieceProgress";
 import { KEYS, chordItem, pretty } from "../data/curriculum";
-import { enharmonic, keyScales } from "../lib/arpeggios";
+import { keyScales } from "../lib/arpeggios";
+import { Fingering } from "../components/Fingering";
 import type { AppState } from "../state/store";
 
 export function Today() {
@@ -59,6 +60,8 @@ export function Today() {
                 <div className="block-body">
                   <div className="eyebrow">{b.cat}</div>
                   <div className="block-title">{b.ttl}</div>
+                </div>
+                <div className="block-more">
                   {b.piece && <PieceProgress id={b.piece} title={b.ttl} showBars />}
                   <p className="block-detail">{b.det}</p>
                   {b.rot && b.keys && (
@@ -85,26 +88,6 @@ export function Today() {
   );
 }
 
-/** Notes with the right- and left-hand finger under each one; thumbs are highlighted to show the crossings. */
-function ScaleFingering({ notes, rh, lh }: { notes: string[]; rh: string[]; lh: string[] }) {
-  const said = notes.map((x, i) => `${x} RH ${rh[i]} LH ${lh[i]}`).join(", ");
-  const row = (h: string, fs: string[]) => [
-    <span key={h} className="sf-h">{h}</span>,
-    ...fs.map((d, i) => <span key={h + i} className={d === "1" ? "sf-f thumb" : "sf-f"}>{d}</span>),
-  ];
-  return (
-    <div className="sf" role="img" aria-label={said}>
-      <span className="sf-h" />
-      {notes.map((x, i) => {
-        const e = enharmonic(x);
-        return <span key={i} className="sf-n">{x}{e && <small>={e}</small>}</span>;
-      })}
-      {row("RH", rh)}
-      {row("LH", lh)}
-    </div>
-  );
-}
-
 /** One row per key in a rotation block (scales, arpeggios, chords), each with its own tick. */
 function KeyRows({ state, block, showForms, setShowForms }: {
   state: AppState; block: Block; showForms: string | null; setShowForms: (k: string | null) => void;
@@ -117,21 +100,20 @@ function KeyRows({ state, block, showForms, setShowForms }: {
         const chord = rot === "chord" ? chordItem(k) : null;
         const info = KEYS.find((o) => o.k === (chord ? chord.k : k))!;
         const isDone = done.includes(k);
-        const sc = state.scales[k] || { maj: 95, nat: 95, harm: 0, mel: 0 };
         return (
           <li key={k} className={`key-row ${isDone ? "done" : ""}`}>
             <Check checked={isDone} label={`Mark ${chord ? chord.name : pretty(k)} done`} onToggle={() => setKeysDone(rot, [k], !isDone, keys)} />
-            <div className="key-row-body">
-              <div className="key-row-title">
-                {chord ? chord.name : rot === "arp" ? `${pretty(k)} major` : `${pretty(k)} major / ${info.m} minor`}
-                {rot === "arp" && state.arps[k] !== "solid" && <span className="key-row-tag">hands separately</span>}
-              </div>
+            <div className="key-row-title">
+              {chord ? chord.name : rot === "arp" ? `${pretty(k)} major` : `${pretty(k)} major / ${info.m} minor`}
+              {rot === "arp" && state.arps[k] !== "solid" && <span className="key-row-tag">hands separately</span>}
+            </div>
+            <div className="key-row-more">
               {rot === "scale" ? (
                 <ol className="quick-forms scale-list">
                   {keyScales(k).map((x) => (
                     <li key={x.f}>
-                      <span className="qf-name">{x.minor ? `${info.m} ` : `${pretty(k)} `}{x.l.toLowerCase()} <small>{sc[x.f] || 80}</small></span>
-                      <ScaleFingering notes={x.notes} rh={x.rh} lh={x.lh} />
+                      <span className="qf-name">{x.minor ? `${info.m} ` : `${pretty(k)} `}{x.l.toLowerCase()}</span>
+                      <Fingering notes={x.notes} rh={x.rh} lh={x.lh} />
                     </li>
                   ))}
                 </ol>

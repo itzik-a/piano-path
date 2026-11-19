@@ -2,8 +2,6 @@ import { KEYS, LAST_STEP, chordItem, pretty } from "../data/curriculum";
 import { todaysPlan } from "../lib/plan";
 import { ROTS, update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
 
-export const setMinutes = (m: number) => update((s) => { s.settings.minutes = m; });
-
 export const setStage = (n: number) => update((s) => { s.settings.stage = n; });
 
 export function markBlock(id: string, done: boolean) {
@@ -34,7 +32,7 @@ export function setTempo(k: string, f: ScaleForm, v: number) {
   update((s) => { s.scales[k][f] = Math.max(0, Math.min(240, Math.round(v) || 0)); });
 }
 
-export function addLog(entry: { d: string; min: number; note: string; items: string }) {
+export function addLog(entry: { d: string; note: string; items: string }) {
   update((s) => {
     s.log.push({ ...entry, ts: Date.now() });
     if (s.log.length > 1500) s.log = s.log.slice(-1500);
@@ -46,10 +44,6 @@ export function deleteLog(ts: number) {
     s.log = s.log.filter((e) => e.ts !== ts);
     s.logDeleted = [...s.logDeleted, ts].slice(-500);
   });
-}
-
-export function setFingering(key: string, form: number, v: string) {
-  update((s) => { s.fingerings[`${key}:${form}`] = v.trim(); });
 }
 
 /** Set a piece's learning step; the last step marks it done, going back un-marks it. */
@@ -98,31 +92,32 @@ function rollRotation(s: AppState, d: string) {
 }
 
 /** Keep today's automatic log entry in step with what's ticked on Today: one entry per day,
-    with a `ts` fixed by the date so every device updates the same entry when syncing. */
+    with a `ts` fixed by the date so every device updates the same entry when syncing. `n` counts the items ticked:
+    each key in a rotation block, plus each other block. */
 function autoLog(s: AppState) {
   const d = todayStr();
   const done = s.today?.date === d ? s.today.done : {};
   const day = s.rot.day?.d === d ? s.rot.day : null;
   const { blocks } = todaysPlan(s);
   const parts: string[] = [];
-  let min = 0;
+  let n = 0;
   for (const b of blocks) {
     if (b.rot && b.keys) {
       const keys = b.keys.filter((k) => day?.[b.rot!].includes(k));
       if (!keys.length) continue;
-      min += (b.min * keys.length) / b.keys.length;
+      n += keys.length;
       const names = keys.map((k) =>
         b.rot === "chord" ? chordItem(k).name : b.rot === "scale" ? `${pretty(k)} major / ${KEYS.find((o) => o.k === k)!.m} minor` : pretty(k));
       parts.push(`${b.cat}: ${names.join(", ")}`);
     } else if (done[b.id]) {
-      min += b.min;
+      n += 1;
       parts.push(`${b.cat}: ${b.ttl}`);
     }
   }
   let ts = Date.parse(d + "T00:00:00Z");
   while (s.logDeleted.includes(ts)) ts++; // deleted earlier today: start a fresh entry
-  const entry = { d, min: Math.round(min), note: "", items: parts.join(" · "), ts, auto: true };
+  const entry = { d, n, note: "", items: parts.join(" · "), ts, auto: true };
   const i = s.log.findIndex((e) => e.ts === ts);
-  if (i >= 0) s.log[i] = { ...s.log[i], min: entry.min, items: entry.items };
+  if (i >= 0) s.log[i] = { ...s.log[i], n, items: entry.items, min: undefined };
   else if (parts.length) s.log.push(entry);
 }

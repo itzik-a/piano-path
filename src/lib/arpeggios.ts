@@ -80,6 +80,57 @@ export const DEFAULT_FINGERINGS: Record<string, string> = {
   "A:5": "1,2,4 : 5,3,2,1",
 };
 
+const BLACK = new Set([1, 3, 6, 8, 10]);
+const pitch = (note: string) => (NATURAL_PC[LETTERS.indexOf(note[0])] + (ACC_VAL[note.slice(1)] || 0) + 12) % 12;
+
+/** Standard one-octave fingering for a form, ascending from the key note to its octave, one digit per note.
+    - Thumbs go on the key note when it's white (or when every note is black), else on a white note:
+      the one with the widest crossing (RH: the gap before the thumb, LH: the gap after it).
+    - Triads: the finger beside the crossing is 4 across a third and 3 across a fourth (C: 1 2 3 5 / 5 4 2 1,
+      E G C: 1 2 4 5, G C E: LH 5 3 2 1). 7ths use 1 2 3 4 (RH) and 1 4 3 2 (LH) from the thumb.
+    - The outer 5 (RH top, LH bottom) only when the thumb is on the key note; a black-key start before
+      the RH thumb uses 2 (D♭: 2 1 2 4 / 2 1 4 2). */
+function standardFingering(notes: string[]): [string[], string[]] {
+  const N = notes.length;
+  const p = notes.map(pitch);
+  const gap = (i: number) => (p[(i + 1) % N] - p[i % N] + 12) % 12 || 12; // semitones from note i up to the next
+  const white = notes.map((_, i) => i).filter((i) => !BLACK.has(p[i]));
+  const thumbOn = (cross: (t: number) => number) =>
+    !BLACK.has(p[0]) || !white.length ? 0 : white.reduce((a, b) => (cross(b) > cross(a) ? b : a));
+
+  const tr = thumbOn((t) => gap((t + N - 1) % N));
+  const rhPat: number[] = [];
+  for (let j = 0; j < N; j++) rhPat[(tr + j) % N] = j + 1;
+  if (N === 3) rhPat[(tr + 2) % N] = gap((tr + 2) % N) <= 4 ? 4 : 3;
+  const rh = Array.from({ length: N + 1 }, (_, i) => rhPat[i % N]);
+  if (tr === 0) rh[N] = 5;
+  else if (!(N === 3 && tr === 2)) for (let i = 0; i < tr; i++) rh[i] = i + 2;
+
+  const tl = thumbOn(gap);
+  const seq = N === 3 ? [1, gap(tl) <= 4 ? 4 : 3, 2] : [1, 4, 3, 2];
+  const lhPat: number[] = [];
+  seq.forEach((d, j) => { lhPat[(tl + j) % N] = d; });
+  const lh = Array.from({ length: N + 1 }, (_, i) => lhPat[i % N]);
+  if (tl === 0) lh[0] = 5;
+
+  return [rh.map(String), lh.map(String)];
+}
+
+/** One octave of a form with its fingering. `custom` ("RH : LH", e.g. "1,2,3 : 5,3,2,1") overrides the standard one;
+    an RH without the top note gets the standard top. */
+export function arpFingering(key: string, f: ArpForm, custom?: string) {
+  const chord = formNotes(key, f);
+  const notes = [...chord, chord[0]];
+  let [rh, lh] = standardFingering(chord);
+  const N = chord.length;
+  const [r, l] = (custom || "").split(":").map((s) => s.match(/[1-5]/g) || []);
+  if (l && (r.length === N || r.length === N + 1) && l.length === N + 1) {
+    rh = r.length === N ? [...r, rh[N]] : r;
+    lh = l;
+  }
+  return { notes, rh, lh };
+}
+
 const PLAIN = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const ACC_VAL: Record<string, number> = { "𝄫": -2, "♭": -1, "♯": 1, "𝄪": 2 };
 

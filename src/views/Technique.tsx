@@ -111,8 +111,8 @@ export function Technique() {
           ))}
         </div>
         <p className="muted small">
-          Each form starts on {pretty(formKey)} ({pretty(formKey)} major / {formInfo.m} minor). Fingering is right hand : left hand,
-          ascending; type your own and it syncs with your progress.
+          Each form starts on {pretty(formKey)} ({pretty(formKey)} major / {formInfo.m} minor). One octave up with the standard fingering;
+          thumbs are highlighted. Over more octaves, keep the thumbs on the same notes.
         </p>
         <ArpForms k={formKey} />
       </section>
