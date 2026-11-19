@@ -339,6 +339,8 @@ button { cursor: pointer; }
 .status.none { background: var(--surface-2); color: var(--muted); }
 
 /* ---------- Arpeggio forms ---------- */
+.arp-forms { display: grid; gap: 10px; }
+.arp-forms > .seg { justify-self: start; }
 .quick-forms { display: grid; font-variant-numeric: tabular-nums; }
 .quick-forms li {
   display: grid; grid-template-columns: 2em minmax(7.5em, auto) 1fr; column-gap: 10px; align-items: baseline;
@@ -348,6 +350,11 @@ button { cursor: pointer; }
 .qf-n { color: var(--muted); font-weight: 600; text-align: right; }
 .qf-name { font-weight: 650; white-space: nowrap; }
 .qf-name small { font-weight: 400; color: var(--muted); }
+.qf-notes { color: var(--ink); letter-spacing: .01em; }
+@media (max-width: 380px) {
+  .quick-forms li { grid-template-columns: 2em 1fr; }
+  .qf-notes { grid-column: 2; }
+}
 .key-picker { display: flex; gap: 6px; overflow-x: auto; margin: 0 -18px; padding: 2px 18px 4px; scrollbar-width: none; }
 .key-picker::-webkit-scrollbar { display: none; }
 .key-chip {
