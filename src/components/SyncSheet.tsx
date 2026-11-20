@@ -14,7 +14,7 @@ function ago(t?: number) {
 
 export function SyncPill({ onOpen }: { onOpen: () => void }) {
   const s = useSyncStatus();
-  const dot = s.kind === "ok" ? "ok" : s.kind === "busy" ? "busy" : s.kind === "error" ? "err" : "";
+  const dot = s.kind === "ok" ? "ok" : s.kind === "busy" ? "busy" : s.kind === "pending" ? "pending" : s.kind === "error" ? "err" : "";
   return (
     <button type="button" className="sync" onClick={onOpen} aria-label={`Sync: ${s.text}. Open sync settings`}>
       <span className={`dot ${dot}`} />
@@ -60,7 +60,7 @@ export function SyncSheet({ onClose }: { onClose: () => void }) {
         {connected ? (
           <>
             <div className={`sync-state ${s.kind}`}>
-              <span className={`dot ${s.kind === "ok" ? "ok" : s.kind === "busy" ? "busy" : s.kind === "error" ? "err" : ""}`} />
+              <span className={`dot ${s.kind === "ok" ? "ok" : s.kind === "busy" ? "busy" : s.kind === "pending" ? "pending" : s.kind === "error" ? "err" : ""}`} />
               <div>
                 <b>{s.text}</b>
                 <span className="muted small">Last synced {ago(s.last)}</span>

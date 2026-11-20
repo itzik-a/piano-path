@@ -5,7 +5,7 @@
    - Each sync: read the gist, merge with local, write back if anything changed.
    - Merge: the practice log is combined from both sides (by `ts`, minus
      deleted entries); everything else comes from whichever copy was edited last.
-   - Runs on start, ~2s after a local change, when the app comes back into view,
+   - Runs on start, after a local change (2 s after the first, then at most once a minute while editing), when the app comes back into view,
      when the network returns, and every 2 minutes while visible. */
 import { useSyncExternalStore } from "react";
 import { getState, normalize, onLocalChange, replaceState, type AppState, type LogEntry } from "./store";
@@ -21,7 +21,7 @@ export const TOKEN_URL =
 interface Cfg { token: string; gistId?: string }
 
 export interface SyncStatus {
-  kind: "off" | "busy" | "ok" | "error" | "offline";
+  kind: "off" | "busy" | "pending" | "ok" | "error" | "offline";
   text: string;
   last?: number;
   gistId?: string;
@@ -155,6 +155,9 @@ export function merge(a: AppState, b: AppState): AppState {
 let chain: Promise<void> = Promise.resolve();
 let dirty = false;
 let debounce: ReturnType<typeof setTimeout> | undefined;
+/** Writes to the gist are batched: at most one per PUSH_GAP_MS while editing (leaving the app or "Sync now" sends right away). */
+const PUSH_GAP_MS = 60_000;
+let lastPush = 0;
 
 /** Run one sync after any sync already in progress. */
 export function syncNow(): Promise<void> {
@@ -183,7 +186,7 @@ async function doSync() {
     const local = getState();
     const merged = remote ? merge(local, remote) : local;
     if (serialize(merged) !== serialize(local)) replaceState(merged);
-    if (!remote || serialize(merged) !== serialize(remote)) await writeRemote(merged);
+    if (!remote || serialize(merged) !== serialize(remote)) { await writeRemote(merged); lastPush = Date.now(); }
     setStatus({ kind: "ok", text: "Synced", last: Date.now() });
   } catch (e) {
     if (wasDirty) dirty = true; // keep the change queued for the next try
@@ -212,8 +215,9 @@ export function startSync() {
   onLocalChange(() => {
     if (!cfg) return;
     dirty = true;
-    setStatus({ kind: "busy", text: "Saving…" });
-    schedule(2000);
+    // First change syncs after 2 s; while editing, at most one write a minute (each write counts toward GitHub's limit).
+    setStatus({ kind: "pending", text: "Saved here · syncing soon" });
+    schedule(Math.max(2000, lastPush + PUSH_GAP_MS - Date.now()));
   });
 
   document.addEventListener("visibilitychange", () => {
