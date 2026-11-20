@@ -56,7 +56,8 @@ class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-async function gh<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** One API call. A 304 (gist unchanged since our ETag) is returned, not thrown. */
+async function ghFetch(path: string, init: RequestInit = {}, extra: Record<string, string> = {}): Promise<Response> {
   const res = await fetch(API + path, {
     ...init,
     cache: "no-store", // the API sends max-age=60; we always want the latest copy
@@ -65,10 +66,15 @@ async function gh<T>(path: string, init: RequestInit = {}): Promise<T> {
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
       ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...extra,
     },
   });
-  if (!res.ok) throw new HttpError(res.status, `GitHub ${res.status}`);
-  return res.json() as Promise<T>;
+  if (!res.ok && res.status !== 304) throw new HttpError(res.status, `GitHub ${res.status}`);
+  return res;
+}
+
+async function gh<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return (await ghFetch(path, init)).json() as Promise<T>;
 }
 
 interface GistFile { content?: string; truncated?: boolean; raw_url?: string }
@@ -88,17 +94,37 @@ async function findOrCreateGist(): Promise<string> {
   return g.id;
 }
 
+/** The gist as last read or written: its ETag and our file's text. Reads send the ETag
+    (If-None-Match); GitHub answers 304 when nothing changed, and a 304 doesn't count
+    toward the hourly API limit, so polling an unchanged gist is free. */
+let lastRead: { gistId: string; etag: string; text: string } | null = null;
+
 async function readRemote(): Promise<AppState | null> {
-  const g = await gh<Gist>(`/gists/${cfg!.gistId}`);
-  const f = g.files[FILE];
-  if (!f) return null;
-  let text = f.content ?? "";
-  if (f.truncated && f.raw_url) text = await (await fetch(f.raw_url, { cache: "no-store" })).text();
+  const gistId = cfg!.gistId!;
+  const known = lastRead?.gistId === gistId ? lastRead : null;
+  const res = await ghFetch(`/gists/${gistId}`, {}, known ? { "If-None-Match": known.etag } : {});
+  let text: string;
+  if (res.status === 304 && known) {
+    text = known.text;
+  } else {
+    const g = (await res.json()) as Gist;
+    const f = g.files[FILE];
+    if (!f) { lastRead = null; return null; }
+    text = f.content ?? "";
+    if (f.truncated && f.raw_url) text = await (await fetch(f.raw_url, { cache: "no-store" })).text();
+    const etag = res.headers.get("etag");
+    lastRead = etag ? { gistId, etag, text } : null;
+  }
   try { return normalize(JSON.parse(text)); } catch { return null; }
 }
 
 async function writeRemote(s: AppState) {
-  await gh(`/gists/${cfg!.gistId}`, { method: "PATCH", body: JSON.stringify({ files: { [FILE]: { content: serialize(s) } } }) });
+  const gistId = cfg!.gistId!;
+  const text = serialize(s);
+  const res = await ghFetch(`/gists/${gistId}`, { method: "PATCH", body: JSON.stringify({ files: { [FILE]: { content: text } } }) });
+  // The reply carries the new version's ETag: the next read is a free 304 unless another device wrote since.
+  const etag = res.headers.get("etag");
+  lastRead = etag ? { gistId, etag, text } : null;
 }
 
 /* ---------- merge ---------- */
