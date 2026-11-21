@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { CAT, STAGES, imslp, maintained, type Category } from "../data/curriculum";
 import { useAppState } from "../state/store";
 import { setStage, toggleItem, togglePiece } from "../state/actions";
 import { PieceProgress } from "../components/PieceProgress";
 import { stageProgress } from "../lib/plan";
+import { usePref } from "../lib/prefs";
 import { Bar, Check } from "../components/ui";
 import { IconChevron, IconExternal } from "../components/Icons";
 
@@ -13,7 +13,8 @@ export function Path({ go }: { go: (v: string) => void }) {
   const state = useAppState();
   const cur = state.settings.stage;
   const keep = maintained(state.checks);
-  const [open, setOpen] = useState<Record<number, boolean>>({ [cur]: true });
+  // Which stages are open; the current stage starts open until you change it
+  const [open, setOpen] = usePref<Record<number, boolean>>("pianoPath.pathOpen", () => ({ [cur]: true }), (v) => !!v && typeof v === "object");
 
   return (
     <>

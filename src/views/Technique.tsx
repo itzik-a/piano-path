@@ -5,6 +5,7 @@ import { ChordView } from "../components/ChordView";
 import { useAppState, type ArpStatus, type ScaleForm } from "../state/store";
 import { cycleArp, setTempo } from "../state/actions";
 import { arpCount, chordRotation } from "../lib/plan";
+import { useDayPref } from "../lib/prefs";
 
 const LABEL: Record<ArpStatus, string> = { solid: "Solid", learning: "Learning", none: "Not yet" };
 const FORMS: { f: ScaleForm; l: string }[] = [
@@ -68,11 +69,12 @@ function TempoInput({ value, onCommit, label }: { value: number; onCommit: (v: n
 
 export function Technique() {
   const state = useAppState();
-  const [formKey, setFormKey] = useState(
-    () => KEYS.find((o) => state.arps[o.k] === "learning")?.k ?? NEW_ARP_ORDER.find((k) => state.arps[k] === "none") ?? "C",
-  );
+  // Picked keys last for the day; next day they start from the key you're learning / today's chord key
+  const isKey = (v: unknown) => KEYS.some((o) => o.k === v);
+  const [formKey, setFormKey] = useDayPref<string>("pianoPath.formKey",
+    () => KEYS.find((o) => state.arps[o.k] === "learning")?.k ?? NEW_ARP_ORDER.find((k) => state.arps[k] === "none") ?? "C", isKey);
   const formInfo = KEYS.find((o) => o.k === formKey)!;
-  const [chordKey, setChordKey] = useState(() => chordRotation(state)[0].k);
+  const [chordKey, setChordKey] = useDayPref<string>("pianoPath.chordKey", () => chordRotation(state)[0].k, isKey);
   const chordInfo = KEYS.find((o) => o.k === chordKey)!;
   return (
     <>

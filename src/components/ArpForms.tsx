@@ -1,17 +1,15 @@
 /* The 11 Russian arpeggio forms for one key, in two tabs: Forms (one line per form, to see the progression)
    and Fingering (one octave of notes with RH / LH fingering under them). */
-import { useState } from "react";
 import { DEFAULT_FINGERINGS, FORMS, arpFingering, chordLongName, enharmonic, formNotes, noteAbove, type ArpForm } from "../lib/arpeggios";
 import { useAppState } from "../state/store";
 import { Fingering } from "./Fingering";
 import { Seg } from "./ui";
+import { usePref } from "../lib/prefs";
 
 type Tab = "Forms" | "Fingering";
-const TAB_KEY = "pianoPath.arpTab";
 
 export function ArpForms({ k }: { k: string }) {
-  const [tab, setTabState] = useState<Tab>(() => (localStorage.getItem(TAB_KEY) === "Fingering" ? "Fingering" : "Forms"));
-  const setTab = (v: Tab) => { setTabState(v); localStorage.setItem(TAB_KEY, v); };
+  const [tab, setTab] = usePref<Tab>("pianoPath.arpTab", () => "Forms", (v) => v === "Forms" || v === "Fingering");
   return (
     <div className="arp-forms">
       <Seg label="Show" options={["Forms", "Fingering"] as Tab[]} value={tab} onChange={setTab} />

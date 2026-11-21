@@ -1,13 +1,13 @@
 /* Chords for one key (major and its relative minor): diatonic triads and 7ths in every inversion,
    and two cadences voiced from each starting position. Pass `only` to show just the major or the minor (Today's rotation). */
-import { useState } from "react";
 import { KEYS, pretty } from "../data/curriculum";
 import { enharmonic } from "../lib/arpeggios";
 import { INVERSIONS, SEVENTH_FINGERS, TRIAD_FINGERS, cadences, diatonicChords, invert, type ChordMode } from "../lib/chords";
 import { Seg } from "./ui";
+import { usePref } from "../lib/prefs";
 
 type Kind = "Triads" | "7ths" | "Cadences";
-const KIND_KEY = "pianoPath.chordView";
+const KINDS: Kind[] = ["Triads", "7ths", "Cadences"];
 
 function Note({ n, finger }: { n: string; finger?: string }) {
   const e = enharmonic(n);
@@ -27,19 +27,21 @@ function Wrap({ s }: { s: string }) {
 
 export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
   const info = KEYS.find((o) => o.k === k)!;
-  const [picked, setMode] = useState<ChordMode>("major");
+  const [picked, setMode] = usePref<ChordMode>("pianoPath.chordMode", () => "major", (v) => v === "major" || v === "minor");
   const mode = only ?? picked;
-  const [kind, setKindState] = useState<Kind>(() => (localStorage.getItem(KIND_KEY) as Kind) || "Triads");
-  const [pos, setPos] = useState(0);
-  const setKind = (v: Kind) => { setKindState(v); localStorage.setItem(KIND_KEY, v); if (v !== "7ths" && pos > 2) setPos(0); };
+  const [kind, setKind] = usePref<Kind>("pianoPath.chordView", () => "Triads", (v) => KINDS.includes(v as Kind));
+  // Each chord type keeps its own inversion / starting position
+  const [posBy, setPosBy] = usePref<Partial<Record<Kind, number>>>("pianoPath.chordPos", () => ({}), (v) => !!v && typeof v === "object");
   const positions = kind === "7ths" ? [0, 1, 2, 3] : [0, 1, 2];
+  const pos = positions.includes(posBy[kind] ?? 0) ? posBy[kind] ?? 0 : 0;
+  const setPos = (i: number) => setPosBy({ ...posBy, [kind]: i });
   const modeName = (m: ChordMode) => (m === "major" ? `${pretty(k)} major` : `${info.m} minor`);
 
   return (
     <div className="chords">
       <div className="chord-controls">
         {!only && <Seg label="Key" options={["major", "minor"] as ChordMode[]} value={mode} onChange={setMode} format={modeName} />}
-        <Seg label="Chord type" options={["Triads", "7ths", "Cadences"] as Kind[]} value={kind} onChange={setKind} />
+        <Seg label="Chord type" options={KINDS} value={kind} onChange={setKind} />
         <Seg
           label={kind === "Cadences" ? "Starting position" : "Inversion"} options={positions} value={pos} onChange={setPos}
           format={(i) => INVERSIONS[i]}

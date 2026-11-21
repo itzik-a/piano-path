@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAppState } from "../state/store";
 import { markBlock, setKeysDone } from "../state/actions";
 import { ticked, todayDone, todaysPlan, type Block } from "../lib/plan";
@@ -11,21 +10,13 @@ import { KEYS, chordItem, pretty } from "../data/curriculum";
 import { keyScales } from "../lib/arpeggios";
 import { Fingering } from "../components/Fingering";
 import type { AppState, Rot } from "../state/store";
-
-/** Blocks folded shut by tapping their title; kept on this device (not synced) until opened again. */
-const COLLAPSED_KEY = "pianoPath.collapsed";
-const readCollapsed = (): string[] => {
-  try { const v = JSON.parse(localStorage.getItem(COLLAPSED_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
-};
+import { usePref } from "../lib/prefs";
 
 export function Today() {
   const state = useAppState();
-  const [collapsed, setCollapsed] = useState<string[]>(readCollapsed);
-  const toggleOpen = (id: string) => {
-    const next = collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id];
-    setCollapsed(next);
-    localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
-  };
+  // Blocks folded shut by tapping their title, kept until opened again
+  const [collapsed, setCollapsed] = usePref<string[]>("pianoPath.collapsed", () => [], Array.isArray);
+  const toggleOpen = (id: string) => setCollapsed(collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id]);
   const { blocks } = todaysPlan(state);
   const done = todayDone(state);
   const date = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
