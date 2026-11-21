@@ -104,7 +104,6 @@ button { cursor: pointer; }
 .muted { color: var(--muted); }
 .small { font-size: .875rem; }
 .eyebrow { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.footnote { font-size: .8rem; color: var(--muted); padding: 0 4px; }
 .page-head { display: grid; gap: 4px; padding: 8px 4px 4px; }
 
 /* ---------- Surfaces ---------- */
@@ -237,20 +236,32 @@ button { cursor: pointer; }
 
 /* ---------- Today ---------- */
 
-.blocks { display: grid; gap: 8px; counter-reset: b; }
+/* Each block is its own card on the page (no outer card), so phones keep the width for the notes */
+.blocks { display: grid; gap: 10px; }
 .block {
   position: relative; overflow: hidden;
   display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
-  padding: 14px; border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  padding: 16px; border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--shadow);
   transition: background .2s, opacity .2s, box-shadow .2s;
 }
+@media (prefers-color-scheme: dark) { .block { box-shadow: inset 0 0 0 1px var(--line); } }
 .block.active { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .block.done { opacity: .55; }
 .block.done .block-title { text-decoration: line-through; text-decoration-color: var(--muted); }
-.block-body { min-width: 0; display: grid; gap: 2px; align-self: center; }
+/* Tapping the header (category + title) folds the block shut or opens it */
+.block-head {
+  grid-column: 2; align-self: center; min-width: 0; min-height: 44px; margin: -4px 0;
+  display: grid; grid-template-columns: 1fr auto; column-gap: 8px; row-gap: 2px; align-items: center;
+  padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.block-head > :not(.block-chevron) { grid-column: 1; }
+.block-chevron { grid-column: 2; grid-row: 1 / span 2; color: var(--muted); transition: transform .2s; }
+.block-head[aria-expanded="true"] .block-chevron { transform: rotate(180deg); }
+.key-forms { margin-top: 10px; }
 /* Detail and key rows sit under the title; on phones they use the full width instead of indenting past the tick */
-.block-more { grid-column: 2; min-width: 0; display: grid; gap: 2px; margin-top: -10px; }
+.block-more { grid-column: 2; min-width: 0; display: grid; gap: 2px; margin-top: -4px; }
 .block-title { font-weight: 600; line-height: 1.3; }
 .block-detail { font-size: .85rem; color: var(--muted); line-height: 1.45; }
 .block .icon-btn:not(.on) { background: var(--raised); box-shadow: var(--shadow); }
@@ -364,42 +375,32 @@ button { cursor: pointer; }
 }
 .fingering::placeholder { font-family: var(--font); color: var(--muted); font-weight: 400; }
 .fingering:focus { outline: 2px solid var(--accent); outline-offset: 0; box-shadow: none; }
-.disclose {
-  justify-self: start; display: inline-flex; align-items: center; gap: 4px;
-  min-height: 36px; margin-top: 4px; padding: 0; border: 0; background: none;
-  color: var(--accent); font-weight: 600; font-size: .86rem;
-}
-.disclose svg { transition: transform .2s; }
-.disclose[aria-expanded="true"] svg { transform: rotate(180deg); }
-.key-rows { display: grid; gap: 8px; margin-top: 8px; }
-.key-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface); }
+.key-rows { display: grid; margin-top: 4px; }
+.key-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
 .key-row-title { font-weight: 600; line-height: 1.3; align-self: center; }
 .key-row-more { grid-column: 2; min-width: 0; display: grid; gap: 2px; }
 .key-row.done .key-row-title { text-decoration: line-through; text-decoration-color: var(--muted); }
 .key-row-tag { margin-left: 8px; font-size: .72rem; font-weight: 500; color: var(--muted); }
-.quick-forms.scale-list li { font-size: .85rem; grid-template-columns: minmax(9.5em, auto) 1fr; padding: 6px 0; }
+.quick-forms.scale-list li { font-size: .95rem; grid-template-columns: minmax(9.5em, auto) 1fr; padding: 6px 0; }
 .quick-forms.arp-list li { align-items: start; }
 .quick-forms.arp-list .qf-n, .quick-forms.arp-list .qf-name { line-height: 1.3; }
 @media (max-width: 600px) {
   .quick-forms.scale-list li { grid-template-columns: 1fr; row-gap: 1px; }
   .quick-forms.arp-list li { grid-template-columns: 1.6em 1fr; column-gap: 6px; row-gap: 2px; padding: 7px 0; }
   .quick-forms.arp-list .sf { grid-column: 2; }
-  .block { padding: 12px; column-gap: 10px; }
+  .block { padding: 14px; column-gap: 10px; }
   .block-more, .key-row-more { grid-column: 1 / -1; }
-  .key-row { padding: 8px; }
 }
 /* Scale notes with RH / LH fingers aligned under each note */
 .sf {
   display: grid; justify-content: start; /* columns set inline: one per note */
   align-items: start; row-gap: 1px; text-align: center; font-variant-numeric: tabular-nums; margin-top: 2px;
 }
-.sf-h { font-size: .68rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-align: left; line-height: 1.6; }
-.sf-n { font-weight: 500; color: var(--ink); white-space: nowrap; line-height: 1.3; }
-.sf-n small { display: block; font-size: .68rem; color: var(--muted); line-height: 1.1; }
-.sf-f { font: 500 .82rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); line-height: 1.6; }
+.sf-h { font-size: .72rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-align: left; line-height: 1.6; }
+.sf-n { font-size: 1.1rem; font-weight: 600; color: var(--ink); white-space: nowrap; line-height: 1.3; }
+.sf-n small { display: block; font-size: .72rem; font-weight: 400; color: var(--muted); line-height: 1.1; }
+.sf-f { font: 500 1.05rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); line-height: 1.5; }
 .sf-f.thumb { color: var(--accent); font-weight: 700; }
-.block-forms { grid-column: 1 / -1; margin: 0 -4px; padding: 4px 14px; border-radius: var(--radius-sm); background: var(--surface); }
-.block.done .block-forms { opacity: 1; }
 
 /* ---------- Log ---------- */
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -567,13 +568,14 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .chords { display: grid; gap: 12px; }
 .chord-controls { display: flex; flex-wrap: wrap; gap: 8px; }
 .cg { display: grid; align-items: start; column-gap: 4px; row-gap: 2px; text-align: center; font-variant-numeric: tabular-nums; }
-.cg-roman { font-size: .72rem; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cg-name { font-size: .74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
-.cg-n { font-weight: 600; font-size: .92rem; line-height: 1.35; white-space: nowrap; }
-.cg-n sup { font: 600 .62rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); margin-left: 1px; }
-.cg-n small { display: block; font-size: .66rem; font-weight: 400; color: var(--muted); line-height: 1.1; }
-.cg-h { font-size: .68rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-align: left; line-height: 1.9; }
-.cg-fingers { font-size: .8rem; color: var(--muted); }
-.cg-fingers b { font: 600 .82rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); white-space: nowrap; }
+.cg-roman { font-size: .85rem; font-weight: 700; color: var(--accent); line-height: 1.2; overflow-wrap: anywhere; align-self: end; }
+.cg-name { align-self: stretch; font-size: .84rem; color: var(--muted); line-height: 1.2; overflow-wrap: anywhere; padding-bottom: 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+.cg-n { font-weight: 600; font-size: 1.12rem; line-height: 1.4; white-space: nowrap; }
+.cg-n sup { font: 600 .74rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); margin-left: 1px; }
+.cg-n small { display: block; font-size: .72rem; font-weight: 400; color: var(--muted); line-height: 1.1; }
+.cg-h { font-size: .72rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-align: left; line-height: 1.9; }
+.cg-fingers { font-size: .9rem; color: var(--muted); }
+.cg-fingers .nowrap { white-space: nowrap; }
+.cg-fingers b { font: 600 1rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); white-space: nowrap; }
 .cadences { display: grid; gap: 14px; }
 .cadence h4 { margin: 0 0 6px; font-size: .86rem; font-weight: 600; }

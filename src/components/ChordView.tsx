@@ -19,6 +19,12 @@ function Note({ n, finger }: { n: string; finger?: string }) {
   );
 }
 
+/** Lets a long numeral or name ("IVmaj7", "C♯m(maj7)") wrap before its quality suffix when the column is narrow. */
+function Wrap({ s }: { s: string }) {
+  const i = s.slice(1).search(/maj|\(|\+|ø|°/) + 1;
+  return i > 0 ? <>{s.slice(0, i)}<wbr />{s.slice(i)}</> : <>{s}</>;
+}
+
 export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
   const info = KEYS.find((o) => o.k === k)!;
   const [picked, setMode] = useState<ChordMode>("major");
@@ -52,13 +58,13 @@ function Grid({ k, mode, sevenths, inv }: { k: string; mode: ChordMode; sevenths
   return (
     <>
       <div className="cg" style={{ gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
-        {chords.map((c) => <span key={"r" + c.degree} className="cg-roman">{c.numeral}</span>)}
-        {chords.map((c) => <span key={"c" + c.degree} className="cg-name">{c.name}</span>)}
+        {chords.map((c) => <span key={"r" + c.degree} className="cg-roman"><Wrap s={c.numeral} /></span>)}
+        {chords.map((c) => <span key={"c" + c.degree} className="cg-name"><Wrap s={c.name} /></span>)}
         {Array.from({ length: voices }, (_, v) => voices - 1 - v).flatMap((v) =>
           chords.map((c) => <Note key={`${v}-${c.degree}`} n={invert(c.notes, inv)[v]} />),
         )}
       </div>
-      <p className="cg-fingers">Fingering, bottom note first: RH <b>{f.rh}</b> · LH <b>{f.lh}</b></p>
+      <p className="cg-fingers">Fingering, bottom note first: <span className="nowrap">RH <b>{f.rh}</b> · LH <b>{f.lh}</b></span></p>
     </>
   );
 }
@@ -72,7 +78,7 @@ function Cadences({ k, mode, start }: { k: string; mode: ChordMode; start: numbe
           <h4>{cad.name}</h4>
           <div className="cg" style={{ gridTemplateColumns: `2em repeat(${cad.steps.length}, minmax(0, 1fr))` }}>
             <span />
-            {cad.steps.map((s, i) => <span key={"r" + i} className="cg-roman">{s.numeral}</span>)}
+            {cad.steps.map((s, i) => <span key={"r" + i} className="cg-roman"><Wrap s={s.numeral} /></span>)}
             {[2, 1, 0].flatMap((v) => [
               <span key={"h" + v} className="cg-h">{v === 2 ? "RH" : ""}</span>,
               ...cad.steps.map((s, i) => (

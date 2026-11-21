@@ -10,11 +10,22 @@ import { PieceProgress } from "../components/PieceProgress";
 import { KEYS, chordItem, pretty } from "../data/curriculum";
 import { keyScales } from "../lib/arpeggios";
 import { Fingering } from "../components/Fingering";
-import type { AppState } from "../state/store";
+import type { AppState, Rot } from "../state/store";
+
+/** Blocks folded shut by tapping their title; kept on this device (not synced) until opened again. */
+const COLLAPSED_KEY = "pianoPath.collapsed";
+const readCollapsed = (): string[] => {
+  try { const v = JSON.parse(localStorage.getItem(COLLAPSED_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
+};
 
 export function Today() {
   const state = useAppState();
-  const [showForms, setShowForms] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<string[]>(readCollapsed);
+  const toggleOpen = (id: string) => {
+    const next = collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id];
+    setCollapsed(next);
+    localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+  };
   const { blocks } = todaysPlan(state);
   const done = todayDone(state);
   const date = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
@@ -31,50 +42,38 @@ export function Today() {
         <h1 className="display">{date}</h1>
       </header>
 
-      <section className="card">
-        <h2>Today's session</h2>
-
-        <ol className="blocks">
-          {blocks.map((b) => {
-            const isDone = !!done[b.id];
-            return (
-              <li key={b.id} className={`block ${isDone ? "done" : ""}`}>
-                <Check checked={isDone} label={`Mark ${b.cat} done`} onToggle={() => toggleDone(b)} />
-                <div className="block-body">
-                  <div className="eyebrow">{b.cat}</div>
-                  <div className="block-title">{b.ttl}</div>
-                </div>
-                <div className="block-more">
+      <ol className="blocks">
+        {blocks.map((b) => {
+          const isDone = !!done[b.id];
+          const open = !collapsed.includes(b.id);
+          const one = b.rot && b.keys?.length === 1 ? b.keys[0] : null;
+          return (
+            <li key={b.id} className={`block ${isDone ? "done" : ""} ${open ? "" : "collapsed"}`}>
+              <Check checked={isDone} label={`Mark ${b.cat} done`} onToggle={() => toggleDone(b)} />
+              <button type="button" className="block-head" aria-expanded={open} aria-controls={`block-${b.id}`} onClick={() => toggleOpen(b.id)}>
+                <span className="eyebrow">{b.cat}</span>
+                <span className="block-title">{b.ttl}</span>
+                <IconChevron className="block-chevron" width={20} height={20} aria-hidden="true" />
+              </button>
+              {open && (
+                <div className="block-more" id={`block-${b.id}`}>
                   {b.piece && <PieceProgress id={b.piece} title={b.ttl} showBars />}
                   <p className="block-detail">{b.det}</p>
-                  {b.rot && b.keys && (
-                    <KeyRows state={state} block={b} showForms={showForms} setShowForms={setShowForms} />
-                  )}
+                  {/* One key today: the block's tick is the key's tick, so its content sits right here */}
+                  {one && <KeyContent rot={b.rot!} k={one} />}
+                  {b.rot && b.keys && !one && <KeyRows state={state} block={b} />}
                 </div>
-                {b.rot && b.keys?.map((k) => showForms === `${b.rot}:${k}` && (
-                  <div key={k} className="block-forms">{b.rot === "chord" ? <ChordView k={chordItem(k).k} only={chordItem(k).mode} /> : <ArpForms k={k} />}</div>
-                ))}
-              </li>
-            );
-          })}
-        </ol>
-
-      </section>
-
-      <p className="footnote">
-        Each technique block has its own rotation around the circle of fifths (C, G, D, … F): one key a day each. Chords take the major one day and its relative minor the next (C major, A minor, G major, E minor, …). Tick each key when you finish it; a key
-        you don't tick comes up first the next day, so none is skipped. Melodic minor shows the way up and comes down natural (with the natural-minor fingering). Fingers are one octave, right hand / left hand, with thumbs highlighted: over more octaves, keep the thumbs on the same notes and only the very top (RH) and bottom (LH) note takes the 4 or 5. The étude and new piece are the first unchecked items in your
-        current stage, so ticking them off on the Path tab moves today's plan forward. (The étude is hidden for now.) Everything you tick
-        is added to today's entry in the Log automatically.
-      </p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </>
   );
 }
 
 /** One row per key in a rotation block (scales, arpeggios, chords), each with its own tick. */
-function KeyRows({ state, block, showForms, setShowForms }: {
-  state: AppState; block: Block; showForms: string | null; setShowForms: (k: string | null) => void;
-}) {
+function KeyRows({ state, block }: { state: AppState; block: Block }) {
   const rot = block.rot!, keys = block.keys!;
   const done = ticked(state, rot);
   return (
@@ -91,25 +90,31 @@ function KeyRows({ state, block, showForms, setShowForms }: {
               {rot === "arp" && state.arps[k] !== "solid" && <span className="key-row-tag">hands separately</span>}
             </div>
             <div className="key-row-more">
-              {rot === "scale" ? (
-                <ol className="quick-forms scale-list">
-                  {keyScales(k).map((x) => (
-                    <li key={x.f}>
-                      <span className="qf-name">{x.minor ? `${info.m} ` : `${pretty(k)} `}{x.l.toLowerCase()}</span>
-                      <Fingering notes={x.notes} rh={x.rh} lh={x.lh} />
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <button type="button" className="disclose" aria-expanded={showForms === `${rot}:${k}`} onClick={() => setShowForms(showForms === `${rot}:${k}` ? null : `${rot}:${k}`)}>
-                  {showForms === `${rot}:${k}` ? "Hide" : "Show"} {chord ? `the chords in ${chord.name}` : `the 11 forms in ${pretty(k)}`}
-                  <IconChevron width={16} height={16} />
-                </button>
-              )}
+              <KeyContent rot={rot} k={k} />
             </div>
           </li>
         );
       })}
     </ul>
+  );
+}
+
+/** A rotation key's content, always shown: the scales with fingering, the day's chords, or the 11 arpeggio forms. */
+function KeyContent({ rot, k }: { rot: Rot; k: string }) {
+  if (rot === "chord") {
+    const c = chordItem(k);
+    return <div className="key-forms"><ChordView k={c.k} only={c.mode} /></div>;
+  }
+  if (rot === "arp") return <div className="key-forms"><ArpForms k={k} /></div>;
+  const info = KEYS.find((o) => o.k === k)!;
+  return (
+    <ol className="quick-forms scale-list">
+      {keyScales(k).map((x) => (
+        <li key={x.f}>
+          <span className="qf-name">{x.minor ? `${info.m} ` : `${pretty(k)} `}{x.l.toLowerCase()}</span>
+          <Fingering notes={x.notes} rh={x.rh} lh={x.lh} />
+        </li>
+      ))}
+    </ol>
   );
 }
