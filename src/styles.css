@@ -189,11 +189,6 @@ button { cursor: pointer; }
 .bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-2), var(--accent)); transition: width .4s ease; }
 
-.ring { position: relative; flex: none; }
-.ring-arc { transition: stroke-dashoffset .5s ease; }
-.ring-label { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
-.ring-label b { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-.ring-label span { font-size: .7rem; color: var(--muted); }
 
 .link { display: inline-flex; align-items: center; gap: 4px; font-size: .84rem; font-weight: 500; margin-top: 4px; min-height: 28px; }
 
@@ -241,13 +236,6 @@ button { cursor: pointer; }
 .tabbar a[aria-current="page"] { color: var(--accent); }
 
 /* ---------- Today ---------- */
-.hero { grid-template-columns: 1fr auto; grid-template-areas: "text ring" "pills pills"; align-items: center; gap: 14px 16px; }
-.hero-text { grid-area: text; }
-.hero .ring { grid-area: ring; }
-.hero .pills { grid-area: pills; }
-@media (min-width: 768px) { .hero { grid-template-areas: "text ring" "pills ring"; row-gap: 10px; } .hero .pills { align-self: start; } .hero-text { align-self: end; } }
-.hero-text { display: grid; gap: 8px; min-width: 0; }
-.hero .display { font-size: 1.45rem; }
 
 .blocks { display: grid; gap: 8px; counter-reset: b; }
 .block {
@@ -539,7 +527,6 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
   .scales tbody th { left: -22px; }
   .key-picker { margin: 0 -22px; padding: 2px 22px 4px; flex-wrap: wrap; overflow: visible; }
   .display { font-size: 2rem; }
-  .hero .display { font-size: 1.75rem; }
   .metro { left: 24px; bottom: 24px; }
   .sheet { margin: auto; border-radius: 24px; }
   .sheet-grip { display: none; }

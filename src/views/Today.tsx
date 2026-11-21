@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useAppState } from "../state/store";
 import { markBlock, setKeysDone } from "../state/actions";
-import { arpCount, stageProgress, ticked, todayDone, todaysPlan, type Block } from "../lib/plan";
-import { Check, Ring } from "../components/ui";
+import { ticked, todayDone, todaysPlan, type Block } from "../lib/plan";
+import { Check } from "../components/ui";
 import { IconChevron } from "../components/Icons";
 import { ArpForms } from "../components/ArpForms";
 import { ChordView } from "../components/ChordView";
@@ -15,14 +15,8 @@ import type { AppState } from "../state/store";
 export function Today() {
   const state = useAppState();
   const [showForms, setShowForms] = useState<string | null>(null);
-  const { st, blocks } = todaysPlan(state);
+  const { blocks } = todaysPlan(state);
   const done = todayDone(state);
-  // Ring counts tickable items: each key in the scale, arpeggio and chord rotations, plus every other block.
-  const items = blocks.reduce((a, b) => a + (b.keys ? b.keys.length : 1), 0);
-  const tickedItems = blocks.reduce(
-    (a, b) => a + (b.rot && b.keys ? ticked(state, b.rot).filter((k) => b.keys!.includes(k)).length : done[b.id] ? 1 : 0), 0,
-  );
-  const sp = stageProgress(state, st);
   const date = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 
   const toggleDone = (b: Block) => {
@@ -33,20 +27,9 @@ export function Today() {
 
   return (
     <>
-      <section className="hero card">
-        <div className="hero-text">
-          <p className="eyebrow">{date}</p>
-          <h1 className="display">Stage {st.n}<span className="dim"> · </span>{st.name}</h1>
-        </div>
-        <Ring value={items ? tickedItems / items : 0} size={96} stroke={9}>
-          <b>{tickedItems}</b>
-          <span>of {items} done</span>
-        </Ring>
-        <div className="pills">
-          <span className="pill">{sp.d}/{sp.n} stage items</span>
-          <span className="pill">Arpeggios {arpCount(state)}/12 solid</span>
-        </div>
-      </section>
+      <header className="page-head">
+        <h1 className="display">{date}</h1>
+      </header>
 
       <section className="card">
         <h2>Today's session</h2>

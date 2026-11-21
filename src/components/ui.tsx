@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { IconCheck } from "./Icons";
 
 export function Check({ checked, label, onToggle }: { checked: boolean; label: string; onToggle: () => void }) {
@@ -6,25 +5,6 @@ export function Check({ checked, label, onToggle }: { checked: boolean; label: s
     <button type="button" className="check" role="checkbox" aria-checked={checked} aria-label={label} onClick={onToggle}>
       <IconCheck width={16} height={16} />
     </button>
-  );
-}
-
-export function Ring({ value, size = 88, stroke = 8, children }: { value: number; size?: number; stroke?: number; children?: ReactNode }) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const v = Math.max(0, Math.min(1, value));
-  return (
-    <div className="ring" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--track)" strokeWidth={stroke} />
-        <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke}
-          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v)}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`} className="ring-arc"
-        />
-      </svg>
-      <div className="ring-label">{children}</div>
-    </div>
   );
 }
 
