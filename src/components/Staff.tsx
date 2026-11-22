@@ -5,7 +5,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { GLYPHS, type Glyph } from "../lib/glyphs";
 import { signaturePositions, type Clef, type KeySig, type StaffNote } from "../lib/notation";
 
-export interface StaffColumn { above?: string; below?: string; notes: StaffNote[] }
+/** `hidden`: quiz mode, the labels show "?" until the chord is tapped (the column keeps its width). */
+export interface StaffColumn { above?: string; below?: string; notes: StaffNote[]; hidden?: boolean }
 
 const SP = 5;          // one staff step (half a space)
 const STAFF_H = 40;    // bottom line to top line
@@ -27,10 +28,10 @@ function nameLines(s: string): string[] {
 const textW = (s: string, fs: number) => [...s].length * fs * 0.6;
 
 interface Placed { pos: number; x: number; acc: { g: Glyph; x: number } | null }
-interface Laid { width: number; staves: { heads: Placed[]; ledgers: number[]; span: [number, number] }[]; col: StaffColumn }
+interface Laid { i: number; width: number; staves: { heads: Placed[]; ledgers: number[]; span: [number, number] }[]; col: StaffColumn }
 
 /** Lays out one chord: seconds side by side, accidentals in columns so they never touch. */
-function layColumn(col: StaffColumn, staves: number): Laid {
+function layColumn(col: StaffColumn, staves: number, i: number): Laid {
   const per = Array.from({ length: staves }, (_, s) => col.notes.filter((n) => n.staff === s).sort((a, b) => a.pos - b.pos));
   // accidentals, top note first, each in the first column with nothing within a sixth
   const accCol = per.map((ns) => {
@@ -56,7 +57,7 @@ function layColumn(col: StaffColumn, staves: number): Laid {
   const width = Math.max(accW + headsW + PAD * 2, nameW + 8, textW(col.below ?? "", NUM_FS) + 8, 42);
   const headX = (width - accW - headsW) / 2 + accW;
   return {
-    width, col,
+    i, width, col,
     staves: per.map((ns, s) => {
       const heads = ns.map((n, i): Placed => {
         const c = accCol[s].out.get(n);
@@ -89,9 +90,13 @@ function useWidth() {
   return [ref, w] as const;
 }
 
-export function Staff({ clefs, sig, columns, label }: { clefs: Clef[]; sig: KeySig; columns: StaffColumn[]; label: string }) {
+export function Staff({ clefs, sig, columns, label, onTap }: {
+  clefs: Clef[]; sig: KeySig; columns: StaffColumn[]; label: string;
+  /** quiz mode: tapping a chord calls this with its column index */
+  onTap?: (i: number) => void;
+}) {
   const [ref, avail] = useWidth();
-  const laid = columns.map((c) => layColumn(c, clefs.length));
+  const laid = columns.map((c, i) => layColumn(c, clefs.length, i));
 
   // clef + key signature at the start of every row
   const sigPos = clefs.map((c) => signaturePositions(sig, c));
@@ -134,7 +139,7 @@ export function Staff({ clefs, sig, columns, label }: { clefs: Clef[]; sig: KeyS
   const glyph = (g: Glyph, x: number, y: number, key: string) => <path key={key} d={g.d} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`} />;
 
   return (
-    <div ref={ref} className="staff" role="img" aria-label={label}>
+    <div ref={ref} className="staff" role={onTap ? "group" : "img"} aria-label={label}>
       {avail > 0 && rows.map((row, ri) => {
         // justify: share the row's spare width out over its chords
         const spare = (rowW - fits([row])) / row.length;
@@ -142,7 +147,7 @@ export function Staff({ clefs, sig, columns, label }: { clefs: Clef[]; sig: KeyS
         const top = staffTop[0], bottom = staffTop[last] + STAFF_H;
         const isLast = ri === rows.length - 1;
         return (
-          <svg key={ri} viewBox={`0 0 ${rowW.toFixed(1)} ${height.toFixed(1)}`} width={rowW * scale} height={height * scale} aria-hidden="true">
+          <svg key={ri} viewBox={`0 0 ${rowW.toFixed(1)} ${height.toFixed(1)}`} width={rowW * scale} height={height * scale} aria-hidden={onTap ? undefined : true}>
             {staffTop.map((t, s) => [0, 1, 2, 3, 4].map((l) => (
               <line key={`l${s}${l}`} className="staff-line" x1={0} x2={rowW} y1={t + l * 10} y2={t + l * 10} />
             )))}
@@ -166,10 +171,22 @@ export function Staff({ clefs, sig, columns, label }: { clefs: Clef[]; sig: KeyS
                         h.acc && glyph(h.acc.g, x0 + mid + h.acc.x, yOf(s, h.pos), `a${s}-${i}`),
                       ]),
                     ])}
-                    {c.col.above && nameLines(c.col.above).map((l, li) => (
-                      <text key={"n" + li} className="staff-name" x={x0 + w / 2} y={NAME_FS + li * (NAME_FS + 2)} fontSize={NAME_FS}>{l}</text>
+                    {c.col.above && (c.col.hidden ? ["?"] : nameLines(c.col.above)).map((l, li) => (
+                      <text key={"n" + li} className={c.col.hidden ? "staff-hidden" : "staff-name"} x={x0 + w / 2} y={NAME_FS + li * (NAME_FS + 2)} fontSize={NAME_FS}>{l}</text>
                     ))}
-                    {c.col.below && <text className="staff-num" x={x0 + w / 2} y={numTop + NUM_FS} fontSize={NUM_FS}>{c.col.below}</text>}
+                    {c.col.below && (
+                      <text className={c.col.hidden ? "staff-hidden" : "staff-num"} x={x0 + w / 2} y={numTop + NUM_FS} fontSize={NUM_FS}>
+                        {c.col.hidden ? "?" : c.col.below}
+                      </text>
+                    )}
+                    {onTap && (
+                      <rect
+                        className="staff-tap" x={x0} y={0} width={w} height={height} role="button" tabIndex={0}
+                        aria-label={c.col.hidden ? `Chord ${c.i + 1}: show its name` : `Chord ${c.i + 1}: ${[c.col.above, c.col.below].filter(Boolean).join(", ")}. Hide`}
+                        onClick={() => onTap(c.i)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap(c.i); } }}
+                      />
+                    )}
                     {(ci < row.length - 1 || !isLast) && <line className="staff-bar" x1={x} x2={x} y1={top} y2={bottom} />}
                   </g>
                 );

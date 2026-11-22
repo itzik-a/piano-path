@@ -589,3 +589,9 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .staff-ink { fill: var(--ink); }
 .staff-name { fill: var(--muted); text-anchor: middle; font-family: var(--font); }
 .staff-num { fill: var(--accent); text-anchor: middle; font-weight: 700; font-family: var(--font); }
+.staff-hidden { fill: var(--muted); text-anchor: middle; font-weight: 600; font-family: var(--font); }
+.staff-tap { fill: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.staff-tap:focus { outline: none; }
+.staff-tap:focus-visible { fill: var(--accent-soft); fill-opacity: .5; }
+.quiz-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.quiz-count { font-size: .9rem; color: var(--muted); }

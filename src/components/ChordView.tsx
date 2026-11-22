@@ -3,6 +3,7 @@
 import { KEYS, pretty } from "../data/curriculum";
 import { enharmonic } from "../lib/arpeggios";
 import { INVERSIONS, SEVENTH_FINGERS, TRIAD_FINGERS, cadences, diatonicChords, invert, type ChordMode } from "../lib/chords";
+import { useState } from "react";
 import { Seg } from "./ui";
 import { Staff } from "./Staff";
 import { usePref } from "../lib/prefs";
@@ -14,6 +15,40 @@ type Notation = "letters" | "staff";
 const NOTATIONS: Notation[] = ["letters", "staff"];
 const CLEFS: Clef[] = ["treble", "bass"];
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+type Practice = "learn" | "quiz";
+const PRACTICES: Practice[] = ["learn", "quiz"];
+
+/** Quiz state for one set of chords: which are shown, and (for the chord grid) a shuffled order. */
+function useQuiz(n: number, shuffled: boolean) {
+  const deal = () => {
+    const o = Array.from({ length: n }, (_, i) => i);
+    if (!shuffled || n < 2) return o;
+    do {
+      for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+    } while (o.every((v, i) => v === i)); // never the plain rising order
+    return o;
+  };
+  const [order, setOrder] = useState(deal);
+  const [shown, setShown] = useState<Set<number>>(() => new Set());
+  return {
+    order, shown,
+    toggle: (i: number) => setShown((s) => { const t = new Set(s); if (t.has(i)) t.delete(i); else t.add(i); return t; }),
+    showAll: () => setShown(new Set(order)),
+    again: () => { setOrder(deal()); setShown(new Set()); },
+  };
+}
+
+function QuizBar({ quiz, n, again }: { quiz: ReturnType<typeof useQuiz>; n: number; again: string }) {
+  const done = quiz.shown.size === n;
+  return (
+    <div className="quiz-bar">
+      <span className="quiz-count">{done ? "All shown" : `Tap a chord to check it · ${quiz.shown.size} of ${n}`}</span>
+      {done
+        ? <button type="button" className="btn ghost" onClick={quiz.again}>{again}</button>
+        : <button type="button" className="btn ghost" onClick={quiz.showAll}>Show all</button>}
+    </div>
+  );
+}
 
 function Note({ n, finger }: { n: string; finger?: string }) {
   const e = enharmonic(n);
@@ -44,7 +79,11 @@ export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
   const modeName = (m: ChordMode) => (m === "major" ? `${pretty(k)} major` : `${info.m} minor`);
   const [notation, setNotation] = usePref<Notation>("pianoPath.chordNotation", () => "letters", (v) => NOTATIONS.includes(v as Notation));
   const [clef, setClef] = usePref<Clef>("pianoPath.chordClef", () => "treble", (v) => CLEFS.includes(v as Clef));
+  const [practice, setPractice] = usePref<Practice>("pianoPath.chordQuiz", () => "learn", (v) => PRACTICES.includes(v as Practice));
   const staff = notation === "staff";
+  const quiz = staff && practice === "quiz";
+  // a new quiz whenever what's on the staff changes
+  const fresh = [k, mode, kind, pos, clef, quiz].join("|");
 
   return (
     <div className="chords">
@@ -57,29 +96,34 @@ export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
         />
         <Seg label="Notation" options={NOTATIONS} value={notation} onChange={setNotation} format={cap} />
         {staff && kind !== "Cadences" && <Seg label="Clef" options={CLEFS} value={clef} onChange={setClef} format={cap} />}
+        {staff && <Seg label="Practice" options={PRACTICES} value={practice} onChange={setPractice} format={cap} />}
       </div>
       {kind === "Cadences"
-        ? <Cadences k={k} mode={mode} start={pos} staff={staff} />
-        : <Grid k={k} mode={mode} sevenths={kind === "7ths"} inv={pos} clef={staff ? clef : undefined} />}
+        ? <Cadences key={fresh} k={k} mode={mode} start={pos} staff={staff} quiz={quiz} />
+        : <Grid key={fresh} k={k} mode={mode} sevenths={kind === "7ths"} inv={pos} clef={staff ? clef : undefined} quiz={quiz} />}
     </div>
   );
 }
 
 /** The seven chords of the key in one inversion: numeral, name, then the notes with the top note on top. */
-function Grid({ k, mode, sevenths, inv, clef }: { k: string; mode: ChordMode; sevenths: boolean; inv: number; clef?: Clef }) {
+function Grid({ k, mode, sevenths, inv, clef, quiz }: { k: string; mode: ChordMode; sevenths: boolean; inv: number; clef?: Clef; quiz: boolean }) {
   const chords = diatonicChords(k, mode, sevenths);
   const f = (sevenths ? SEVENTH_FINGERS : TRIAD_FINGERS)[inv];
   const voices = chords[0].notes.length;
+  const q = useQuiz(chords.length, true);
   if (clef) {
     const sig = keySignature(k);
     const placed = chordsOnStaff(chords, inv, sig, clef);
+    const order = quiz ? q.order : chords.map((_, i) => i);
     return (
       <>
         <Staff
           clefs={[clef]} sig={sig}
-          columns={chords.map((c, i) => ({ above: c.name, below: c.numeral, notes: placed[i] }))}
-          label={`${sevenths ? "Seventh chords" : "Triads"}, ${INVERSIONS[inv].toLowerCase()} position, on the ${clef} staff`}
+          columns={order.map((i) => ({ above: chords[i].name, below: chords[i].numeral, notes: placed[i], hidden: quiz && !q.shown.has(i) }))}
+          onTap={quiz ? (col) => q.toggle(order[col]) : undefined}
+          label={`${sevenths ? "Seventh chords" : "Triads"}, ${INVERSIONS[inv].toLowerCase()} position, on the ${clef} staff${quiz ? ", in a shuffled order" : ""}`}
         />
+        {quiz && <QuizBar quiz={q} n={chords.length} again="New order" />}
         <p className="cg-fingers">Fingering, bottom note first: <span className="nowrap">{clef === "treble" ? "RH" : "LH"} <b>{clef === "treble" ? f.rh : f.lh}</b></span></p>
       </>
     );
@@ -99,19 +143,25 @@ function Grid({ k, mode, sevenths, inv, clef }: { k: string; mode: ChordMode; se
 }
 
 /** Each cadence as columns: right-hand chord (fingers as small numbers) over the left-hand bass. */
-function Cadences({ k, mode, start, staff }: { k: string; mode: ChordMode; start: number; staff: boolean }) {
+function Cadences({ k, mode, start, staff, quiz }: { k: string; mode: ChordMode; start: number; staff: boolean; quiz: boolean }) {
   const sig = keySignature(k);
   const tonic = diatonicChords(k, mode)[0].notes[0];
+  const list = cadences(k, mode, start);
+  // one quiz over both cadences: chord j of cadence c is item at[c] + j
+  const at = list.map((_, c) => list.slice(0, c).reduce((a, x) => a + x.steps.length, 0));
+  const total = list.reduce((a, x) => a + x.steps.length, 0);
+  const q = useQuiz(total, false);
   return (
     <div className="cadences">
-      {cadences(k, mode, start).map((cad) => (
+      {list.map((cad, c) => (
         <div key={cad.name} className="cadence">
-          <h4>{cad.name}</h4>
+          <h4>{quiz && !cad.steps.every((_, j) => q.shown.has(at[c] + j)) ? `Cadence ${c + 1}` : cad.name}</h4>
           {staff ? (
             <Staff
               clefs={["treble", "bass"]} sig={sig}
-              columns={cadenceOnStaff(cad.steps, tonic, sig).map((notes, i) => ({ below: cad.steps[i].numeral, notes }))}
-              label={`${cad.name}, right hand over the bass on a grand staff`}
+              columns={cadenceOnStaff(cad.steps, tonic, sig).map((notes, i) => ({ below: cad.steps[i].numeral, notes, hidden: quiz && !q.shown.has(at[c] + i) }))}
+              onTap={quiz ? (i) => q.toggle(at[c] + i) : undefined}
+              label={quiz ? `Cadence ${c + 1}, right hand over the bass on a grand staff` : `${cad.name}, right hand over the bass on a grand staff`}
             />
           ) : <div className="cg" style={{ gridTemplateColumns: `2em repeat(${cad.steps.length}, minmax(0, 1fr))` }}>
             <span />
@@ -127,6 +177,7 @@ function Cadences({ k, mode, start, staff }: { k: string; mode: ChordMode; start
           </div>}
         </div>
       ))}
+      {quiz && <QuizBar quiz={q} n={total} again="Hide again" />}
       <p className="cg-fingers">{staff ? "" : "Small numbers are right-hand fingers. "}Keep common notes held and move the others to the nearest chord tone.</p>
     </div>
   );
