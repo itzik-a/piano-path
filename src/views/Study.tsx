@@ -5,6 +5,7 @@ import { IconBack } from "../components/Icons";
 import { KeySigDrill } from "../study/KeySigs";
 import { ChordsInKey } from "../study/ChordsInKey";
 import { ChordCards } from "../study/ChordCards";
+import { Reading } from "../study/Reading";
 import { useAppState } from "../state/store";
 import { todayCount, weakItems } from "../lib/study";
 
@@ -12,6 +13,7 @@ interface Drill { id: string; title: string; d: string; group: string; view: () 
 
 export const DRILLS: Drill[] = [
   { id: "keys", group: "Reading", title: "Key signatures", d: "Name the key from its signature, or find the signature for a key. Aim for under two seconds.", view: () => <KeySigDrill /> },
+  { id: "reading", group: "Reading", title: "Reading passages", d: "A new 8-bar piece for two hands in any key, at four levels. Read it through, then name the chord in each bar.", view: () => <Reading /> },
   { id: "cards", group: "Harmony", title: "Chord flashcards", d: "One chord at a time in any inversion, in one clef or both hands. Name it with its figures (V⁶₅, ii⁶).", view: () => <ChordCards /> },
   { id: "chords", group: "Harmony", title: "Chords in a key", d: "The seven chords of a key on the staff, shuffled. Name each one, then tap to check.", view: () => <ChordsInKey /> },
 ];

@@ -644,3 +644,20 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .drill-answer span { color: var(--muted); font-size: 1.1rem; margin-left: 6px; }
 .mark { display: flex; gap: 10px; }
 .mark .btn { min-width: 120px; }
+.passage-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.passage-head .drill-key { text-align: left; }
+.passage { color: var(--ink); min-height: 120px; overflow: hidden; }
+.passage svg { display: block; max-width: 100%; height: auto; }
+.passage .abcjs-annotation, .passage .abcjs-chord { fill: var(--accent); font-weight: 600; }
+.passage .abcjs-bar-number { fill: var(--muted); }
+.analysis { display: grid; gap: 10px; justify-items: start; }
+.analysis p { margin: 0; }
+.bar-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
+@media (min-width: 560px) { .bar-chips { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.bar-chip {
+  min-height: 52px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--muted);
+  display: grid; place-content: center; gap: 1px; line-height: 1.1; font-weight: 700;
+}
+.bar-chip small { font-size: .68rem; font-weight: 600; color: var(--muted); }
+.bar-chip span { font-size: 1rem; }
+.bar-chip.open { background: var(--accent-soft); color: var(--accent); }

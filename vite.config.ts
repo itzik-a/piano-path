@@ -6,4 +6,6 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   base: "./",
   plugins: [react()],
+  // abcjs (~510 kB, Study's reading passages only) is split into its own chunk and loaded on demand
+  build: { chunkSizeWarningLimit: 600 },
 });
