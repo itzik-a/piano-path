@@ -90,10 +90,13 @@ function useWidth() {
   return [ref, w] as const;
 }
 
-export function Staff({ clefs, sig, columns, label, onTap }: {
+export function Staff({ clefs, sig, columns, label, onTap, maxScale = MAX_SCALE, center = false }: {
   clefs: Clef[]; sig: KeySig; columns: StaffColumn[]; label: string;
   /** quiz mode: tapping a chord calls this with its column index */
   onTap?: (i: number) => void;
+  /** how far a short staff may grow on a wide screen (flashcards draw larger) */
+  maxScale?: number;
+  center?: boolean;
 }) {
   const [ref, avail] = useWidth();
   const laid = columns.map((c, i) => layColumn(c, clefs.length, i));
@@ -102,7 +105,7 @@ export function Staff({ clefs, sig, columns, label, onTap }: {
   const sigPos = clefs.map((c) => signaturePositions(sig, c));
   const sigGlyph = sig.acc === "♭" ? GLYPHS.flat : GLYPHS.sharp;
   const sigStart = 6 + GLYPHS.gClef.w + 6;
-  const prefix = sigStart + sigPos[0].length * (sigGlyph.w + 1.5) + 8;
+  const prefix = sigStart + sigPos[0].length * (sigGlyph.w + 1.5) + (columns.length ? 8 : 12);
 
   // vertical space, from the highest and lowest notes of all chords so every row matches
   const range = (s: number) => {
@@ -133,13 +136,13 @@ export function Staff({ clefs, sig, columns, label, onTap }: {
     if (!avail || fits(rows) * MIN_SCALE <= avail) break;
   }
   const rowW = fits(rows);
-  const scale = avail ? Math.min(MAX_SCALE, avail / rowW) : 1;
+  const scale = avail ? Math.min(maxScale, avail / rowW) : 1;
 
   const yOf = (s: number, pos: number) => staffTop[s] + (8 - pos) * SP;
   const glyph = (g: Glyph, x: number, y: number, key: string) => <path key={key} d={g.d} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`} />;
 
   return (
-    <div ref={ref} className="staff" role={onTap ? "group" : "img"} aria-label={label}>
+    <div ref={ref} className={center ? "staff center" : "staff"} role={onTap ? "group" : "img"} aria-label={label}>
       {avail > 0 && rows.map((row, ri) => {
         // justify: share the row's spare width out over its chords
         const spare = (rowW - fits([row])) / row.length;
@@ -191,7 +194,7 @@ export function Staff({ clefs, sig, columns, label, onTap }: {
                   </g>
                 );
               })}
-              {isLast && <>
+              {isLast && columns.length > 0 && <>
                 <line className="staff-bar" x1={rowW - 6} x2={rowW - 6} y1={top} y2={bottom} />
                 <rect x={rowW - 3.5} y={top} width={3.5} height={bottom - top} />
               </>}

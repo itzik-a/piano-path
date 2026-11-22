@@ -15,8 +15,6 @@ type Notation = "letters" | "staff";
 const NOTATIONS: Notation[] = ["letters", "staff"];
 const CLEFS: Clef[] = ["treble", "bass"];
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
-type Practice = "learn" | "quiz";
-const PRACTICES: Practice[] = ["learn", "quiz"];
 
 /** Quiz state for one set of chords: which are shown, and (for the chord grid) a shuffled order. */
 function useQuiz(n: number, shuffled: boolean) {
@@ -66,7 +64,8 @@ function Wrap({ s }: { s: string }) {
   return i > 0 ? <>{s.slice(0, i)}<wbr />{s.slice(i)}</> : <>{s}</>;
 }
 
-export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
+/** `quiz`: Study's version, always on the staff with names hidden until tapped. */
+export function ChordView({ k, only, quiz = false }: { k: string; only?: ChordMode; quiz?: boolean }) {
   const info = KEYS.find((o) => o.k === k)!;
   const [picked, setMode] = usePref<ChordMode>("pianoPath.chordMode", () => "major", (v) => v === "major" || v === "minor");
   const mode = only ?? picked;
@@ -79,9 +78,7 @@ export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
   const modeName = (m: ChordMode) => (m === "major" ? `${pretty(k)} major` : `${info.m} minor`);
   const [notation, setNotation] = usePref<Notation>("pianoPath.chordNotation", () => "letters", (v) => NOTATIONS.includes(v as Notation));
   const [clef, setClef] = usePref<Clef>("pianoPath.chordClef", () => "treble", (v) => CLEFS.includes(v as Clef));
-  const [practice, setPractice] = usePref<Practice>("pianoPath.chordQuiz", () => "learn", (v) => PRACTICES.includes(v as Practice));
-  const staff = notation === "staff";
-  const quiz = staff && practice === "quiz";
+  const staff = quiz || notation === "staff";
   // a new quiz whenever what's on the staff changes
   const fresh = [k, mode, kind, pos, clef, quiz].join("|");
 
@@ -94,9 +91,8 @@ export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
           label={kind === "Cadences" ? "Starting position" : "Inversion"} options={positions} value={pos} onChange={setPos}
           format={(i) => INVERSIONS[i]}
         />
-        <Seg label="Notation" options={NOTATIONS} value={notation} onChange={setNotation} format={cap} />
+        {!quiz && <Seg label="Notation" options={NOTATIONS} value={notation} onChange={setNotation} format={cap} />}
         {staff && kind !== "Cadences" && <Seg label="Clef" options={CLEFS} value={clef} onChange={setClef} format={cap} />}
-        {staff && <Seg label="Practice" options={PRACTICES} value={practice} onChange={setPractice} format={cap} />}
       </div>
       {kind === "Cadences"
         ? <Cadences key={fresh} k={k} mode={mode} start={pos} staff={staff} quiz={quiz} />

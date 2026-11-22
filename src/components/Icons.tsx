@@ -17,6 +17,12 @@ export const IconPath = (p: P) => (
 export const IconKeys = (p: P) => (
   <svg {...base(p)}><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M9 4v16M15 4v16" /><path d="M7.5 4v8.5h3V4M13.5 4v8.5h3V4" fill="currentColor" stroke="none" /></svg>
 );
+export const IconStudy = (p: P) => (
+  <svg {...base(p)}><path d="M3 6.5h18M3 10.5h18M3 14.5h18" opacity=".45" /><ellipse cx="9" cy="17.6" rx="3.3" ry="2.4" transform="rotate(-20 9 17.6)" fill="currentColor" stroke="none" /><path d="M12.1 17V3.5c1.6 2.6 5.2 3.3 5.2 7" /></svg>
+);
+export const IconBack = (p: P) => (
+  <svg {...base({ width: 18, height: 18, strokeWidth: 2.2, ...p })}><path d="M15 5l-7 7 7 7" /></svg>
+);
 export const IconLog = (p: P) => (
   <svg {...base(p)}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
 );

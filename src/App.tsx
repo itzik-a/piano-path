@@ -3,29 +3,32 @@ import { Today } from "./views/Today";
 import { Path } from "./views/Path";
 import { Technique } from "./views/Technique";
 import { Log } from "./views/Log";
+import { Study } from "./views/Study";
 import { Metronome } from "./components/Metronome";
 import { SyncPill, SyncSheet } from "./components/SyncSheet";
-import { IconKeys, IconLog, IconPath, IconToday } from "./components/Icons";
+import { IconKeys, IconLog, IconPath, IconStudy, IconToday } from "./components/Icons";
 
-type View = "today" | "path" | "technique" | "log";
+type View = "today" | "path" | "technique" | "study" | "log";
 const TABS: { id: View; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: "today", label: "Today", Icon: IconToday },
   { id: "path", label: "Path", Icon: IconPath },
   { id: "technique", label: "Technique", Icon: IconKeys },
+  { id: "study", label: "Study", Icon: IconStudy },
   { id: "log", label: "Log", Icon: IconLog },
 ];
 
-const readHash = (): View => {
-  const h = location.hash.slice(1);
-  return TABS.some((t) => t.id === h) ? (h as View) : "today";
+/** "#study/keys" → view "study", sub "keys" */
+const readHash = (): { view: View; sub: string } => {
+  const [h, sub = ""] = location.hash.slice(1).split("/");
+  return TABS.some((t) => t.id === h) ? { view: h as View, sub } : { view: "today", sub: "" };
 };
 
 export function App() {
-  const [view, setView] = useState<View>(readHash);
+  const [{ view, sub }, setRoute] = useState(readHash);
   const [syncOpen, setSyncOpen] = useState(false);
 
   useEffect(() => {
-    const on = () => { setView(readHash()); window.scrollTo(0, 0); };
+    const on = () => { setRoute(readHash()); window.scrollTo(0, 0); };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
@@ -49,10 +52,11 @@ export function App() {
         </div>
       </header>
 
-      <main className="wrap main" key={view}>
+      <main className="wrap main" key={view + "/" + sub}>
         {view === "today" && <Today />}
         {view === "path" && <Path go={go} />}
         {view === "technique" && <Technique />}
+        {view === "study" && <Study sub={sub} />}
         {view === "log" && <Log />}
       </main>
 
