@@ -637,3 +637,10 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .answers.find { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .answers.find .answer:nth-child(8) { grid-column-start: 2; }
 .nowrap { white-space: nowrap; }
+.drill-key { margin: 0; text-align: center; color: var(--muted); }
+.drill-key b { color: var(--ink); }
+.drill-answer { font-size: 1.5rem; }
+.drill-answer b { color: var(--accent); font-weight: 700; }
+.drill-answer span { color: var(--muted); font-size: 1.1rem; margin-left: 6px; }
+.mark { display: flex; gap: 10px; }
+.mark .btn { min-width: 120px; }

@@ -73,6 +73,16 @@ export function chordsOnStaff(chords: Chord[], inv: number, sig: KeySig, clef: C
   return voiced.map((v, i) => v.map((n, j) => ({ staff: 0, pos: steps[i][j] + shift - BOTTOM[clef], acc: shown(n, sig) })));
 }
 
+/** One chord (notes bottom-up) on a staff: the octave with the fewest steps off the staff, then the most central. */
+export function placeChord(notes: string[], sig: KeySig, clef: Clef, staff = 0): StaffNote[] {
+  const steps = stackUp(notes, LETTERS.indexOf(notes[0][0]));
+  const lo = steps[0] - BOTTOM[clef], hi = steps[steps.length - 1] - BOTTOM[clef];
+  const near = Math.round((4 - (lo + hi) / 2) / 7) * 7;
+  const cost = (sh: number) => Math.max(0, hi + sh - 8) + Math.max(0, -(lo + sh)) + Math.abs(4 - (lo + hi) / 2 - sh) / 100;
+  const shift = [near - 7, near, near + 7].reduce((a, b) => (cost(b) < cost(a) ? b : a));
+  return notes.map((n, j) => ({ staff, pos: steps[j] + shift - BOTTOM[clef], acc: shown(n, sig) }));
+}
+
 /** Absolute step of a spelled note at a MIDI pitch (60 = middle C, C4). */
 function stepAt(note: string, midi: number): number {
   const letter = LETTERS.indexOf(note[0]);

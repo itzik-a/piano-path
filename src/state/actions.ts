@@ -121,3 +121,19 @@ function autoLog(s: AppState) {
   if (i >= 0) s.log[i] = { ...s.log[i], n, items: entry.items, min: undefined };
   else if (parts.length) s.log.push(entry);
 }
+
+/** One Study answer: `item` is "<drill>:<…>" (e.g. "keys:D"). A miss makes the item come back more often; a right answer pays one miss off. */
+export function recordAnswer(item: string, ok: boolean) {
+  update((s) => {
+    const drill = item.split(":")[0];
+    const m = (s.study.miss[item] || 0) + (ok ? -1 : 1);
+    if (m > 0) s.study.miss[item] = Math.min(m, 3);
+    else delete s.study.miss[item];
+    const d = todayStr();
+    const day = (s.study.days[d] ||= {});
+    const [n, r] = day[drill] || [0, 0];
+    day[drill] = [n + 1, r + (ok ? 1 : 0)];
+    const old = new Date(Date.now() - 60 * 864e5).toLocaleDateString("en-CA");
+    for (const k of Object.keys(s.study.days)) if (k < old) delete s.study.days[k];
+  });
+}

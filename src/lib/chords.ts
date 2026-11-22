@@ -69,6 +69,14 @@ export const invert = (notes: string[], inv: number) => [...notes.slice(inv), ..
 
 export const INVERSIONS = ["Root", "1st", "2nd", "3rd"];
 
+const TRIAD_FIG = ["", "⁶", "⁶₄"], SEVENTH_FIG = ["⁷", "⁶₅", "⁴₃", "⁴₂"];
+/** Roman numeral with inversion figures: "ii" → "ii⁶", "V7" → "V⁶₅", "viiø7" → "viiø⁴₂". */
+export function figured(c: Chord, inv: number): string {
+  return c.notes.length === 4 ? c.numeral.replace(/7$/, "") + SEVENTH_FIG[inv] : c.numeral + TRIAD_FIG[inv];
+}
+/** Chord symbol with its bass: "G7/B" (root position stays "G7"). */
+export const slashName = (c: Chord, inv: number) => (inv ? `${c.name}/${invert(c.notes, inv)[0]}` : c.name);
+
 /** Standard fingerings, bottom note first, per inversion. */
 export const TRIAD_FINGERS = [
   { rh: "1 3 5", lh: "5 3 1" },

@@ -7,6 +7,7 @@ import { Staff } from "../components/Staff";
 import { Seg } from "../components/ui";
 import { usePref } from "../lib/prefs";
 import { keySignature, type Clef } from "../lib/notation";
+import { recordAnswer } from "../state/actions";
 import { pick, secs, shuffle } from "./common";
 
 type Ask = "name" | "find";
@@ -16,7 +17,8 @@ const CLEF_PICKS: ClefPick[] = ["treble", "bass", "both"];
 const ASK_LABEL: Record<Ask, string> = { name: "Name the key", find: "Find the signature" };
 const GOAL_MS = 2000;
 
-interface Card { k: string; minor: boolean; clef: Clef }
+/** `retry`: a missed key asked again at the end of the round (not counted in the round's score) */
+interface Card { k: string; minor: boolean; clef: Clef; retry?: boolean }
 interface Result { k: string; minor: boolean; ms: number; first: boolean }
 
 const sigLabel = (k: string) => {
@@ -76,8 +78,12 @@ function Round({ ask, clef }: { ask: Ask; clef: ClefPick }) {
     if (answered !== null || wrong.includes(v)) return;
     if (v !== right) { setWrong([...wrong, v]); return; }
     const ms = performance.now() - start.current;
+    const first = wrong.length === 0;
     setAnswered(ms);
-    setResults([...results, { k: card.k, minor: card.minor, ms, first: wrong.length === 0 }]);
+    recordAnswer(`keys:${card.k}`, first);
+    if (card.retry) return;
+    setResults([...results, { k: card.k, minor: card.minor, ms, first }]);
+    if (!first) setCards([...cards, { ...card, minor: !card.minor, retry: true }]);
   };
 
   if (!card) {
@@ -100,7 +106,7 @@ function Round({ ask, clef }: { ask: Ask; clef: ClefPick }) {
   const options = ask === "name" ? KEYS.map((o) => o.k) : SIG_OPTIONS;
   return (
     <div className="drill">
-      <div className="drill-progress muted small">{i + 1} of 12</div>
+      <div className="drill-progress muted small">{card.retry ? "Again" : `${i + 1} of 12`}</div>
       <div className="drill-prompt">
         {ask === "name"
           ? <Staff clefs={[card.clef]} sig={sig} columns={[]} label={`A key signature on the ${card.clef} staff`} maxScale={2.2} center />

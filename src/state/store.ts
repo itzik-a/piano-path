@@ -37,6 +37,14 @@ export interface Rotation {
   day: ({ d: string } & Record<Rot, string[]>) | null;
 }
 
+/** Study drill results: what keeps coming back, and how many answers a day. */
+export interface StudyState {
+  /** outstanding misses per drill item ("keys:D", "cards:C:min:7:4:1"): +1 on a miss, −1 when right; removed at 0 */
+  miss: Record<string, number>;
+  /** answers per day and drill, [answered, right], kept 60 days: { "2026-11-22": { keys: [12, 10] } } */
+  days: Record<string, Record<string, [number, number]>>;
+}
+
 export interface AppState {
   v: 1;
   settings: { minutes: number; stage: number };
@@ -52,6 +60,7 @@ export interface AppState {
   logDeleted: number[];
   today: { date: string; done: Record<string, boolean> } | null;
   rot: Rotation;
+  study: StudyState;
   updatedAt: number;
 }
 
@@ -66,7 +75,7 @@ export function defaults(): AppState {
     arps[o.k] = i < 6 ? "solid" : "none";
     scales[o.k] = { maj: 95, nat: 95, harm: 0, mel: 0 };
   });
-  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {}, chord: {} }, day: null }, updatedAt: 0 };
+  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {}, chord: {} }, day: null }, study: { miss: {}, days: {} }, updatedAt: 0 };
 }
 
 /* Chords used to rotate by key ("C" = C major and A minor together); now major and minor are separate
@@ -100,6 +109,7 @@ export function normalize(s: unknown): AppState {
       n: { scale: x.rot.n?.scale || {}, arp: x.rot.n?.arp || {}, chord: chordCounts(x.rot.n?.chord || {}) },
       day: x.rot.day ? { ...x.rot.day, scale: x.rot.day.scale || [], arp: x.rot.day.arp || [], chord: chordTicks(x.rot.day.chord || []) } : null,
     } : d.rot,
+    study: { miss: x.study?.miss || {}, days: x.study?.days || {} },
     updatedAt: x.updatedAt || 0,
   };
 }
