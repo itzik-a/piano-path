@@ -661,3 +661,10 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .bar-chip small { font-size: .68rem; font-weight: 600; color: var(--muted); }
 .bar-chip span { font-size: 1rem; }
 .bar-chip.open { background: var(--accent-soft); color: var(--accent); }
+.dim7-groups { display: grid; gap: 10px; }
+@media (min-width: 700px) { .dim7-groups { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.dim7-group { background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px; display: grid; gap: 4px; }
+.dim7-group p { margin: 0; font-size: .92rem; }
+.dim7-group b { display: inline-block; min-width: 3.6em; }
+.answers.cad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 560px) { .answers.cad { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

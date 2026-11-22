@@ -90,14 +90,13 @@ function stepAt(note: string, midi: number): number {
   return octave * 7 + letter;
 }
 
-/** A cadence on a grand staff: the right hand as voiced, the bass a little below the tonic in the bass clef. */
+/** A progression on a grand staff: the right hand as voiced; the bass in the octave from a 6th below the tonic
+    to a whole step above it, with the tonic between B2 and A♯3 (so IV and V fall below it, ii sits just above). */
 export function cadenceOnStaff(steps: CadenceStep[], tonic: string, sig: KeySig): StaffNote[][] {
   const pcOf = (n: string) => ((NATURAL_PC[LETTERS.indexOf(n[0])] + (ACC[n.slice(1)] ?? 0)) % 12 + 12) % 12;
-  const home = 48 + pcOf(tonic); // tonic bass between C3 and B3; the other bass notes sit up to a fifth below it
+  const home = 47 + ((pcOf(tonic) + 1) % 12);
   return steps.map((s) => {
-    let b = 48 + pcOf(s.bass);
-    while (b > home) b -= 12;
-    while (b < home - 7) b += 12;
+    const b = home - 9 + ((pcOf(s.bass) - (home - 9) + 120) % 12);
     return [
       ...s.rh.map((n, i) => ({ staff: 0, pos: stepAt(n, s.pitches[i]) - BOTTOM.treble, acc: shown(n, sig) })),
       { staff: 1, pos: stepAt(s.bass, b) - BOTTOM.bass, acc: shown(s.bass, sig) },

@@ -5,7 +5,7 @@
    Pitches are diatonic steps (octave × 7 + letter, so C4 = 28) with an accidental; `toAbc()` writes ABC for abcjs. */
 import { KEYS } from "../data/curriculum";
 import { keyScales } from "./arpeggios";
-import { diatonicChords, type ChordMode } from "./chords";
+import { diatonicChords, secondaryDominant, type ChordMode } from "./chords";
 import { keySignature } from "./notation";
 
 export type Level = 1 | 2 | 3 | 4;
@@ -39,19 +39,9 @@ export interface Passage {
 
 const midi = (p: P) => (Math.floor(p.d / 7) + 1) * 12 + NATURAL_PC[((p.d % 7) + 7) % 7] + ACC_V[p.acc];
 const letter = (d: number) => ((d % 7) + 7) % 7;
-const pcOf = (n: string) => (NATURAL_PC[LETTERS.indexOf(n[0])] + ACC_V[n.slice(1)] + 12) % 12;
 
 type R = () => number;
 const pickR = <T,>(r: R, xs: T[]): T => xs[Math.floor(r() * xs.length)];
-
-/** The note `steps` letters and `semis` semitones above `note`, spelled. */
-function spell(note: string, steps: number, semis: number): string {
-  const l = (LETTERS.indexOf(note[0]) + steps) % 7;
-  let diff = (pcOf(note) + semis - NATURAL_PC[l]) % 12;
-  if (diff > 6) diff -= 12;
-  if (diff < -6) diff += 12;
-  return LETTERS[l] + ACC_OF[diff];
-}
 
 /* ---------- Harmony ---------- */
 
@@ -75,10 +65,8 @@ const sup7 = (numeral: string) => numeral.replace(/7$/, "⁷");
 
 function barChord(k: string, mode: ChordMode, st: Step): BarChord {
   if (st.sec !== undefined) {
-    const target = diatonicChords(k, mode)[st.sec];
-    const root = spell(target.notes[0], 4, 7);
-    const tones = [root, spell(root, 2, 4), spell(root, 4, 7), spell(root, 6, 10)];
-    return { numeral: `V⁷/${target.numeral}`, name: root + "7", tones };
+    const c = secondaryDominant(k, mode, st.sec);
+    return { numeral: c.numeral.replace("7/", "⁷/"), name: c.name, tones: c.notes };
   }
   const c = diatonicChords(k, mode, !!st.seventh)[st.deg];
   return { numeral: sup7(c.numeral), name: c.name, tones: c.notes };

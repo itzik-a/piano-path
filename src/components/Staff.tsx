@@ -19,9 +19,10 @@ const ACC_GLYPH: Record<string, Glyph> = {
 const NAME_FS = 13, NUM_FS = 14;
 const MIN_SCALE = 0.85, MAX_SCALE = 1.25;
 
-/** "C♯m(maj7)" → ["C♯m", "(maj7)"]: long names break before their quality suffix, like the letter view. */
+/** "C♯m(maj7)" → ["C♯m", "(maj7)"], "E°7/B♭" → ["E°7", "/B♭"]: long names break before the bass or the quality suffix. */
 function nameLines(s: string): string[] {
   if (s.length <= 5) return [s];
+  if (s.includes("/")) return [s.slice(0, s.indexOf("/")), s.slice(s.indexOf("/"))];
   const i = s.slice(1).search(/maj|\(|\+|ø|°/) + 1;
   return i > 0 ? [s.slice(0, i), s.slice(i)] : [s];
 }

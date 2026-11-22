@@ -142,7 +142,8 @@ function nearest(notes: string[], prev: number[]) {
     for (let low = prev[0] - 12; low <= prev[0] + 12; low++) {
       if (((low % 12) + 12) % 12 !== base) continue;
       const p = stack(bottom, low);
-      const moves = p.map((x, i) => Math.abs(x - prev[i]));
+      // chords of different sizes (a 7th chord to a triad) compare voice by voice, extra voices against the top
+      const moves = p.map((x, i) => Math.abs(x - (prev[i] ?? prev[prev.length - 1])));
       const cost = moves.reduce((a, b) => a + b, 0), leap = Math.max(...moves);
       if (!best || cost < best.cost || (cost === best.cost && leap < best.leap)) best = { inv, pitches: p, cost, leap };
     }
@@ -150,29 +151,56 @@ function nearest(notes: string[], prev: number[]) {
   return best!;
 }
 
+/** A progression voiced for the right hand with nearest voice leading, the first chord in position `start`
+    around middle C; each chord's `bass` goes to the left hand. */
+export function voice(chords: { numeral: string; notes: string[]; bass: string }[], start: number): CadenceStep[] {
+  const first = invert(chords[0].notes, start % chords[0].notes.length);
+  const p0 = pc(first[0]);
+  let prev = stack(first, 60 + p0 - (p0 > 7 ? 12 : 0)); // start around middle C
+  return chords.map((ch, i) => {
+    let inv = start % ch.notes.length;
+    if (i > 0) {
+      const v = nearest(ch.notes, prev);
+      inv = v.inv;
+      prev = v.pitches;
+    }
+    return { numeral: ch.numeral, rh: invert(ch.notes, inv), pitches: prev, inv, bass: ch.bass };
+  });
+}
+
 /** Each cadence for the key, with the right hand starting on the tonic chord in position `start`. */
 export function cadences(key: string, mode: ChordMode, start: number): Cadence[] {
   const triads = diatonicChords(key, mode);
-  return PROGRESSIONS[mode].map(({ name, steps }) => {
-    const first = invert(triads[0].notes, start);
-    const p0 = pc(first[0]);
-    let prev = stack(first, 60 + p0 - (p0 > 7 ? 12 : 0)); // start around middle C
-    const out: CadenceStep[] = steps.map(([d, six4], i) => {
-      const ch = triads[d];
-      let inv = start;
-      if (i > 0) {
-        const v = nearest(ch.notes, prev);
-        inv = v.inv;
-        prev = v.pitches;
-      }
-      return {
-        numeral: ch.numeral + (six4 ? "⁶₄" : ""),
-        rh: invert(ch.notes, inv),
-        pitches: prev,
-        inv,
-        bass: six4 ? ch.notes[2] : ch.notes[0],
-      };
-    });
-    return { name, steps: out };
-  });
+  return PROGRESSIONS[mode].map(({ name, steps }) => ({
+    name,
+    steps: voice(steps.map(([d, six4]) => ({
+      numeral: triads[d].numeral + (six4 ? "⁶₄" : ""),
+      notes: triads[d].notes,
+      bass: six4 ? triads[d].notes[2] : triads[d].notes[0],
+    })), start),
+  }));
+}
+
+const ACC_OF: Record<number, string> = { 0: "", 1: "♯", [-1]: "♭", 2: "𝄪", [-2]: "𝄫" };
+/** The note `steps` letters and `semis` semitones above `note`, spelled (steps 2 + semis 4 = a major third). */
+export function spell(note: string, steps: number, semis: number): string {
+  const l = (LETTERS.indexOf(note[0]) + steps) % 7;
+  let diff = (pc(note) + semis - NATURAL_PC[l]) % 12;
+  if (diff > 6) diff -= 12;
+  if (diff < -6) diff += 12;
+  return LETTERS[l] + ACC_OF[diff];
+}
+
+/** Dominant 7th of a scale degree (V⁷/x), root upwards: a major triad and minor 7th a fifth above x's root. */
+export function secondaryDominant(key: string, mode: ChordMode, target: number): Chord {
+  const t = diatonicChords(key, mode)[target];
+  const root = spell(t.notes[0], 4, 7);
+  return { degree: target, numeral: `V7/${t.numeral}`, name: root + "7", notes: [root, spell(root, 2, 4), spell(root, 4, 7), spell(root, 6, 10)] };
+}
+
+/** Leading-note diminished 7th of a scale degree (vii°⁷/x): a semitone below x's root, stacked in minor thirds. */
+export function secondaryDim7(key: string, mode: ChordMode, target: number): Chord {
+  const t = diatonicChords(key, mode)[target];
+  const root = spell(t.notes[0], 6, 11);
+  return { degree: target, numeral: `vii°7/${t.numeral}`, name: root + "°7", notes: [root, spell(root, 2, 3), spell(root, 4, 6), spell(root, 6, 9)] };
 }

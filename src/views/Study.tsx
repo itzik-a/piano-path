@@ -6,6 +6,7 @@ import { KeySigDrill } from "../study/KeySigs";
 import { ChordsInKey } from "../study/ChordsInKey";
 import { ChordCards } from "../study/ChordCards";
 import { Reading } from "../study/Reading";
+import { CadenceDrill, Dim7Drill, SecondaryDrill } from "../study/Harmony";
 import { useAppState } from "../state/store";
 import { todayCount, weakItems } from "../lib/study";
 
@@ -16,6 +17,9 @@ export const DRILLS: Drill[] = [
   { id: "reading", group: "Reading", title: "Reading passages", d: "A new 8-bar piece for two hands in any key, at four levels. Read it through, then name the chord in each bar.", view: () => <Reading /> },
   { id: "cards", group: "Harmony", title: "Chord flashcards", d: "One chord at a time in any inversion, in one clef or both hands. Name it with its figures (V⁶₅, ii⁶).", view: () => <ChordCards /> },
   { id: "chords", group: "Harmony", title: "Chords in a key", d: "The seven chords of a key on the staff, shuffled. Name each one, then tap to check.", view: () => <ChordsInKey /> },
+  { id: "dim7", group: "Harmony", title: "Diminished 7ths", d: "The three diminished 7ths, their spellings, and where each one resolves.", view: () => <Dim7Drill /> },
+  { id: "sec", group: "Harmony", title: "Secondary dominants", d: "V⁷/x and vii°⁷/x: a chord borrowed to point at another one. Name it and its target.", view: () => <SecondaryDrill /> },
+  { id: "cad", group: "Harmony", title: "Cadence types", d: "Authentic, plagal, half or deceptive: name how the phrase ends.", view: () => <CadenceDrill /> },
 ];
 
 /** "12 today · 3 to review", for drills that keep results */
