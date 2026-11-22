@@ -4,10 +4,16 @@ import { KEYS, pretty } from "../data/curriculum";
 import { enharmonic } from "../lib/arpeggios";
 import { INVERSIONS, SEVENTH_FINGERS, TRIAD_FINGERS, cadences, diatonicChords, invert, type ChordMode } from "../lib/chords";
 import { Seg } from "./ui";
+import { Staff } from "./Staff";
 import { usePref } from "../lib/prefs";
+import { cadenceOnStaff, chordsOnStaff, keySignature, type Clef } from "../lib/notation";
 
 type Kind = "Triads" | "7ths" | "Cadences";
 const KINDS: Kind[] = ["Triads", "7ths", "Cadences"];
+type Notation = "letters" | "staff";
+const NOTATIONS: Notation[] = ["letters", "staff"];
+const CLEFS: Clef[] = ["treble", "bass"];
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 function Note({ n, finger }: { n: string; finger?: string }) {
   const e = enharmonic(n);
@@ -36,6 +42,9 @@ export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
   const pos = positions.includes(posBy[kind] ?? 0) ? posBy[kind] ?? 0 : 0;
   const setPos = (i: number) => setPosBy({ ...posBy, [kind]: i });
   const modeName = (m: ChordMode) => (m === "major" ? `${pretty(k)} major` : `${info.m} minor`);
+  const [notation, setNotation] = usePref<Notation>("pianoPath.chordNotation", () => "letters", (v) => NOTATIONS.includes(v as Notation));
+  const [clef, setClef] = usePref<Clef>("pianoPath.chordClef", () => "treble", (v) => CLEFS.includes(v as Clef));
+  const staff = notation === "staff";
 
   return (
     <div className="chords">
@@ -46,17 +55,35 @@ export function ChordView({ k, only }: { k: string; only?: ChordMode }) {
           label={kind === "Cadences" ? "Starting position" : "Inversion"} options={positions} value={pos} onChange={setPos}
           format={(i) => INVERSIONS[i]}
         />
+        <Seg label="Notation" options={NOTATIONS} value={notation} onChange={setNotation} format={cap} />
+        {staff && kind !== "Cadences" && <Seg label="Clef" options={CLEFS} value={clef} onChange={setClef} format={cap} />}
       </div>
-      {kind === "Cadences" ? <Cadences k={k} mode={mode} start={pos} /> : <Grid k={k} mode={mode} sevenths={kind === "7ths"} inv={pos} />}
+      {kind === "Cadences"
+        ? <Cadences k={k} mode={mode} start={pos} staff={staff} />
+        : <Grid k={k} mode={mode} sevenths={kind === "7ths"} inv={pos} clef={staff ? clef : undefined} />}
     </div>
   );
 }
 
 /** The seven chords of the key in one inversion: numeral, name, then the notes with the top note on top. */
-function Grid({ k, mode, sevenths, inv }: { k: string; mode: ChordMode; sevenths: boolean; inv: number }) {
+function Grid({ k, mode, sevenths, inv, clef }: { k: string; mode: ChordMode; sevenths: boolean; inv: number; clef?: Clef }) {
   const chords = diatonicChords(k, mode, sevenths);
   const f = (sevenths ? SEVENTH_FINGERS : TRIAD_FINGERS)[inv];
   const voices = chords[0].notes.length;
+  if (clef) {
+    const sig = keySignature(k);
+    const placed = chordsOnStaff(chords, inv, sig, clef);
+    return (
+      <>
+        <Staff
+          clefs={[clef]} sig={sig}
+          columns={chords.map((c, i) => ({ above: c.name, below: c.numeral, notes: placed[i] }))}
+          label={`${sevenths ? "Seventh chords" : "Triads"}, ${INVERSIONS[inv].toLowerCase()} position, on the ${clef} staff`}
+        />
+        <p className="cg-fingers">Fingering, bottom note first: <span className="nowrap">{clef === "treble" ? "RH" : "LH"} <b>{clef === "treble" ? f.rh : f.lh}</b></span></p>
+      </>
+    );
+  }
   return (
     <>
       <div className="cg" style={{ gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
@@ -72,13 +99,21 @@ function Grid({ k, mode, sevenths, inv }: { k: string; mode: ChordMode; sevenths
 }
 
 /** Each cadence as columns: right-hand chord (fingers as small numbers) over the left-hand bass. */
-function Cadences({ k, mode, start }: { k: string; mode: ChordMode; start: number }) {
+function Cadences({ k, mode, start, staff }: { k: string; mode: ChordMode; start: number; staff: boolean }) {
+  const sig = keySignature(k);
+  const tonic = diatonicChords(k, mode)[0].notes[0];
   return (
     <div className="cadences">
       {cadences(k, mode, start).map((cad) => (
         <div key={cad.name} className="cadence">
           <h4>{cad.name}</h4>
-          <div className="cg" style={{ gridTemplateColumns: `2em repeat(${cad.steps.length}, minmax(0, 1fr))` }}>
+          {staff ? (
+            <Staff
+              clefs={["treble", "bass"]} sig={sig}
+              columns={cadenceOnStaff(cad.steps, tonic, sig).map((notes, i) => ({ below: cad.steps[i].numeral, notes }))}
+              label={`${cad.name}, right hand over the bass on a grand staff`}
+            />
+          ) : <div className="cg" style={{ gridTemplateColumns: `2em repeat(${cad.steps.length}, minmax(0, 1fr))` }}>
             <span />
             {cad.steps.map((s, i) => <span key={"r" + i} className="cg-roman"><Wrap s={s.numeral} /></span>)}
             {[2, 1, 0].flatMap((v) => [
@@ -89,10 +124,10 @@ function Cadences({ k, mode, start }: { k: string; mode: ChordMode; start: numbe
             ])}
             <span className="cg-h">LH</span>
             {cad.steps.map((s, i) => <Note key={"b" + i} n={s.bass} />)}
-          </div>
+          </div>}
         </div>
       ))}
-      <p className="cg-fingers">Small numbers are right-hand fingers. Keep common notes held and move the others to the nearest chord tone.</p>
+      <p className="cg-fingers">{staff ? "" : "Small numbers are right-hand fingers. "}Keep common notes held and move the others to the nearest chord tone.</p>
     </div>
   );
 }

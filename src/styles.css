@@ -579,3 +579,13 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .cg-fingers b { font: 600 1rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); white-space: nowrap; }
 .cadences { display: grid; gap: 14px; }
 .cadence h4 { margin: 0 0 6px; font-size: .86rem; font-weight: 600; }
+
+/* Chords on a staff (components/Staff.tsx) */
+.staff { display: grid; gap: 6px; min-width: 0; }
+.staff svg { display: block; overflow: visible; }
+.staff-line { stroke: var(--muted); stroke-width: 1.1; }
+.staff-ledger { stroke: var(--ink); stroke-width: 1.6; }
+.staff-bar { stroke: var(--muted); stroke-width: 1.4; }
+.staff-ink { fill: var(--ink); }
+.staff-name { fill: var(--muted); text-anchor: middle; font-family: var(--font); }
+.staff-num { fill: var(--accent); text-anchor: middle; font-weight: 700; font-family: var(--font); }

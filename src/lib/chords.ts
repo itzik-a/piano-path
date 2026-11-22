@@ -88,6 +88,8 @@ export interface CadenceStep {
   numeral: string;
   /** right hand, bottom note first */
   rh: string[];
+  /** right hand as MIDI pitches, bottom note first (60 = middle C), for placing it on a staff */
+  pitches: number[];
   /** which inversion the right hand is in (for the fingering) */
   inv: number;
   /** left-hand bass note */
@@ -158,6 +160,7 @@ export function cadences(key: string, mode: ChordMode, start: number): Cadence[]
       return {
         numeral: ch.numeral + (six4 ? "⁶₄" : ""),
         rh: invert(ch.notes, inv),
+        pitches: prev,
         inv,
         bass: six4 ? ch.notes[2] : ch.notes[0],
       };
