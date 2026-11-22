@@ -7,6 +7,7 @@ import { ChordsInKey } from "../study/ChordsInKey";
 import { ChordCards } from "../study/ChordCards";
 import { Reading } from "../study/Reading";
 import { CadenceDrill, Dim7Drill, SecondaryDrill } from "../study/Harmony";
+import { Analysis } from "../study/Analysis";
 import { useAppState } from "../state/store";
 import { todayCount, weakItems } from "../lib/study";
 
@@ -19,6 +20,7 @@ export const DRILLS: Drill[] = [
   { id: "chords", group: "Harmony", title: "Chords in a key", d: "The seven chords of a key on the staff, shuffled. Name each one, then tap to check.", view: () => <ChordsInKey /> },
   { id: "dim7", group: "Harmony", title: "Diminished 7ths", d: "The three diminished 7ths, their spellings, and where each one resolves.", view: () => <Dim7Drill /> },
   { id: "sec", group: "Harmony", title: "Secondary dominants", d: "V⁷/x and vii°⁷/x: a chord borrowed to point at another one. Name it and its target.", view: () => <SecondaryDrill /> },
+  { id: "analysis", group: "Your pieces", title: "Analysis notes", d: "Your harmonic analysis of each piece: bars, key, numerals and notes, kept with the piece.", view: () => <Analysis /> },
   { id: "cad", group: "Harmony", title: "Cadence types", d: "Authentic, plagal, half or deceptive: name how the phrase ends.", view: () => <CadenceDrill /> },
 ];
 

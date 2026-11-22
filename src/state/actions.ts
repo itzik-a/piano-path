@@ -1,6 +1,6 @@
 import { KEYS, LAST_STEP, chordItem, pretty } from "../data/curriculum";
 import { todaysPlan } from "../lib/plan";
-import { ROTS, update, todayStr, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
+import { ROTS, update, todayStr, type AnalysisRow, type AppState, type ArpStatus, type Rot, type ScaleForm } from "./store";
 
 export const setStage = (n: number) => update((s) => { s.settings.stage = n; });
 
@@ -135,5 +135,41 @@ export function recordAnswer(item: string, ok: boolean) {
     day[drill] = [n + 1, r + (ok ? 1 : 0)];
     const old = new Date(Date.now() - 60 * 864e5).toLocaleDateString("en-CA");
     for (const k of Object.keys(s.study.days)) if (k < old) delete s.study.days[k];
+  });
+}
+
+/* ---------- Analysis notes (Study) ---------- */
+
+/** A new section after the last one ("9–" if the last covered bars 1–8). Returns its id. */
+export function addAnalysisRow(piece: string): number {
+  const id = Date.now();
+  update((s) => {
+    const rows = (s.analysis[piece] ||= []);
+    const last = rows[rows.length - 1];
+    const end = last && /(\d+)\D*$/.exec(last.bars);
+    rows.push({ id, bars: end ? `${+end[1] + 1}–` : "1–", key: last?.key ?? "", harm: "", note: "" });
+  });
+  return id;
+}
+
+export function setAnalysisRow(piece: string, id: number, patch: Partial<Omit<AnalysisRow, "id">>) {
+  update((s) => {
+    const r = s.analysis[piece]?.find((x) => x.id === id);
+    if (r) Object.assign(r, patch);
+  });
+}
+
+export function deleteAnalysisRow(piece: string, id: number) {
+  update((s) => {
+    s.analysis[piece] = (s.analysis[piece] || []).filter((x) => x.id !== id);
+    if (!s.analysis[piece].length) delete s.analysis[piece];
+  });
+}
+
+/** Undo a delete: put the row back where it was. */
+export function restoreAnalysisRow(piece: string, row: AnalysisRow, at: number) {
+  update((s) => {
+    const rows = (s.analysis[piece] ||= []);
+    if (!rows.some((x) => x.id === row.id)) rows.splice(Math.min(at, rows.length), 0, row);
   });
 }

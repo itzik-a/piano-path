@@ -1,3 +1,4 @@
+import { STUDY_LINKS } from "../study/links";
 import { CAT, STAGES, imslp, maintained, type Category } from "../data/curriculum";
 import { useAppState } from "../state/store";
 import { setStage, toggleItem, togglePiece } from "../state/actions";
@@ -68,6 +69,9 @@ export function Path({ go }: { go: (v: string) => void }) {
                                 <div className="item-title">{i.t}</div>
                                 {i.d && <p className="item-detail">{i.d}</p>}
                                 {i.c === "R" && <PieceProgress id={i.id} title={i.t} />}
+                                {STUDY_LINKS[i.id] && (
+                                  <a className="link" href={`#study/${STUDY_LINKS[i.id].drill}`}>Practise in Study: {STUDY_LINKS[i.id].label} ›</a>
+                                )}
                                 {i.q && (
                                   <a className="link" href={imslp(i.q)} target="_blank" rel="noopener">
                                     Free score on IMSLP <IconExternal />

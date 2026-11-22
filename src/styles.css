@@ -668,3 +668,30 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .dim7-group b { display: inline-block; min-width: 3.6em; }
 .answers.cad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 560px) { .answers.cad { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.field input[type="text"], .field select {
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  border: 0; border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--ink);
+  font-size: 1rem; font-weight: 400;
+}
+.field select { -webkit-appearance: none; appearance: none; font-weight: 600; }
+.an-row { gap: 10px; }
+.an-row textarea { min-height: 52px; }
+.an-row .harm { font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+.an-top { display: flex; gap: 8px; align-items: end; }
+.bars-field { flex: 0 0 96px; }
+.key-field { flex: 1; min-width: 0; }
+.an-top .icon-btn { margin-bottom: 2px; }
+.keypad { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; margin-top: -4px; }
+.keypad button {
+  min-height: 40px; border: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+  font-size: 1.05rem; font-weight: 700;
+}
+.add-row { justify-self: start; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 20;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 72px);
+  display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 16px;
+  background: var(--raised); color: var(--ink); border-radius: 999px; box-shadow: var(--shadow-lg); font-weight: 600; font-size: .92rem; white-space: nowrap;
+}
+@media (min-width: 768px) { .toast { bottom: 32px; } }

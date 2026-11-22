@@ -45,6 +45,19 @@ export interface StudyState {
   days: Record<string, Record<string, [number, number]>>;
 }
 
+/** One section of a piece's harmonic analysis (Study → Analysis notes). */
+export interface AnalysisRow {
+  /** creation time, also the row's id */
+  id: number;
+  /** "1–8" */
+  bars: string;
+  /** "B minor" */
+  key: string;
+  /** Roman numerals, free text: "i – iv⁶ – V⁷ – i" */
+  harm: string;
+  note: string;
+}
+
 export interface AppState {
   v: 1;
   settings: { minutes: number; stage: number };
@@ -61,6 +74,8 @@ export interface AppState {
   today: { date: string; done: Record<string, boolean> } | null;
   rot: Rotation;
   study: StudyState;
+  /** harmonic analysis per piece: repertoire item id, or "keep:<title>" for Keep up pieces outside the stages */
+  analysis: Record<string, AnalysisRow[]>;
   updatedAt: number;
 }
 
@@ -75,7 +90,7 @@ export function defaults(): AppState {
     arps[o.k] = i < 6 ? "solid" : "none";
     scales[o.k] = { maj: 95, nat: 95, harm: 0, mel: 0 };
   });
-  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {}, chord: {} }, day: null }, study: { miss: {}, days: {} }, updatedAt: 0 };
+  return { v: 1, settings: { minutes: 45, stage: 1 }, arps, scales, checks: {}, fingerings: {}, pieces: {}, log: [], logDeleted: [], today: null, rot: { n: { scale: {}, arp: {}, chord: {} }, day: null }, study: { miss: {}, days: {} }, analysis: {}, updatedAt: 0 };
 }
 
 /* Chords used to rotate by key ("C" = C major and A minor together); now major and minor are separate
@@ -110,6 +125,7 @@ export function normalize(s: unknown): AppState {
       day: x.rot.day ? { ...x.rot.day, scale: x.rot.day.scale || [], arp: x.rot.day.arp || [], chord: chordTicks(x.rot.day.chord || []) } : null,
     } : d.rot,
     study: { miss: x.study?.miss || {}, days: x.study?.days || {} },
+    analysis: x.analysis || {},
     updatedAt: x.updatedAt || 0,
   };
 }
