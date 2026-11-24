@@ -1,7 +1,8 @@
-/* Floating metronome: a round bubble at the bottom left (tempo, pulses on each beat while playing)
+/* Floating metronome (keeps the screen on while playing): a round bubble at the bottom left (tempo, pulses on each beat while playing)
    that opens a panel with play, tempo controls, beats per bar and tap tempo. */
 import { useEffect, useRef, useState } from "react";
 import { click, ensureCtx } from "../lib/audio";
+import { useWakeLock } from "../lib/wakelock";
 import { IconMetronome, IconMinus, IconPause, IconPlay, IconPlus } from "./Icons";
 import { Seg } from "./ui";
 
@@ -24,6 +25,7 @@ export function Metronome() {
   const [open, setOpen] = useState(false);
   const [noAudio, setNoAudio] = useState(false);
   const [pulse, setPulse] = useState(0);
+  useWakeLock(on); // a locked screen throttles the clicks on iPhone, so keep it on while playing
   const box = useRef<HTMLElement>(null);
 
   // Scheduler state lives in a ref so tempo changes apply without restarting.

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { TOKEN_URL, connect, disconnect, syncNow, useSyncStatus } from "../state/sync";
 import { IconExternal } from "./Icons";
+import { ThemePicker } from "./ThemePicker";
 
 function ago(t?: number) {
   if (!t) return "not yet";
@@ -121,6 +122,11 @@ export function SyncSheet({ onClose }: { onClose: () => void }) {
             </p>
           </>
         )}
+        <div className="theme-block">
+          <h3>Appearance</h3>
+          <ThemePicker />
+          <p className="muted small">System follows this device's light or dark setting. Each device keeps its own choice.</p>
+        </div>
       </div>
     </dialog>
   );

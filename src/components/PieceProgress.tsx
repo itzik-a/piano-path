@@ -27,7 +27,7 @@ export function PieceProgress({ id, title, showBars = false }: { id: string; tit
   const step = state.checks[id] ? LAST_STEP : p?.step ?? 0;
   return (
     <div className="piece-progress">
-      <div className="steps" role="group" aria-label={`Learning step for ${title}`}>
+      <div className="progress-steps" role="group" aria-label={`Learning step for ${title}`}>
         {PIECE_STEPS.map((s, i) => (
           <button
             key={s.l} type="button" className={`step ${i <= step ? "reached" : ""}`}

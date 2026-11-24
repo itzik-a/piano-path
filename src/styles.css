@@ -38,37 +38,36 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0A0B0E;
-    --surface: #15161B;
-    --surface-2: #1E1F26;
-    --ink: #EEEFF3;
-    --muted: #9499A7;
-    --line: rgba(255, 255, 255, .08);
-    --track: rgba(255, 255, 255, .09);
-    --accent: #8E8CFF;
-    --accent-2: #B3B2FF;
-    --accent-soft: #24234A;
-    --on-accent: #0B0B1E;
-    --good: #4ADE9A;
-    --good-soft: #10301F;
-    --warn: #F2B45A;
-    --warn-soft: #34270F;
-    --danger: #FF7676;
-    --on-status: #0A0B0E;
-    --raised: #2C2E37;
-    --check-edge: rgba(255, 255, 255, .24);
-    --key-white: #E7E8ED;
-    --key-edge: rgba(0, 0, 0, .5);
-    --key-black: #050507;
-    --key-black-text: #7D818E;
-    --glass: rgba(21, 22, 27, .72);
-    --glass-line: rgba(255, 255, 255, .07);
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
-    --shadow-lg: 0 2px 6px rgba(0, 0, 0, .3), 0 16px 40px rgba(0, 0, 0, .5);
-    color-scheme: dark;
-  }
+/* Dark: <html data-theme="dark">, set from the choice in settings or the system's (src/lib/theme.ts) */
+:root[data-theme="dark"] {
+  --bg: #0A0B0E;
+  --surface: #15161B;
+  --surface-2: #1E1F26;
+  --ink: #EEEFF3;
+  --muted: #9499A7;
+  --line: rgba(255, 255, 255, .08);
+  --track: rgba(255, 255, 255, .09);
+  --accent: #8E8CFF;
+  --accent-2: #B3B2FF;
+  --accent-soft: #24234A;
+  --on-accent: #0B0B1E;
+  --good: #4ADE9A;
+  --good-soft: #10301F;
+  --warn: #F2B45A;
+  --warn-soft: #34270F;
+  --danger: #FF7676;
+  --on-status: #0A0B0E;
+  --raised: #2C2E37;
+  --check-edge: rgba(255, 255, 255, .24);
+  --key-white: #E7E8ED;
+  --key-edge: rgba(0, 0, 0, .5);
+  --key-black: #050507;
+  --key-black-text: #7D818E;
+  --glass: rgba(21, 22, 27, .72);
+  --glass-line: rgba(255, 255, 255, .07);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, .3), 0 16px 40px rgba(0, 0, 0, .5);
+  color-scheme: dark;
 }
 
 /* ---------- Base ---------- */
@@ -116,7 +115,7 @@ button { cursor: pointer; }
   gap: 12px;
   min-width: 0;
 }
-@media (prefers-color-scheme: dark) { .card { box-shadow: inset 0 0 0 1px var(--line); } }
+:where(:root[data-theme="dark"]) .card { box-shadow: inset 0 0 0 1px var(--line); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 
 .pills { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -245,7 +244,7 @@ button { cursor: pointer; }
   background: var(--surface); box-shadow: var(--shadow);
   transition: background .2s, opacity .2s, box-shadow .2s;
 }
-@media (prefers-color-scheme: dark) { .block { box-shadow: inset 0 0 0 1px var(--line); } }
+:where(:root[data-theme="dark"]) .block { box-shadow: inset 0 0 0 1px var(--line); }
 .block.active { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .block.done { opacity: .55; }
 .block.done .block-title { text-decoration: line-through; text-decoration-color: var(--muted); }
@@ -405,7 +404,7 @@ button { cursor: pointer; }
 /* ---------- Log ---------- */
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .stat { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; box-shadow: var(--shadow); display: grid; gap: 2px; }
-@media (prefers-color-scheme: dark) { .stat { box-shadow: inset 0 0 0 1px var(--line); } }
+:where(:root[data-theme="dark"]) .stat { box-shadow: inset 0 0 0 1px var(--line); }
 .stat b { font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .stat span { font-size: .75rem; color: var(--muted); font-weight: 500; }
 .chart { width: 100%; height: auto; display: block; }
@@ -546,7 +545,7 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 
 /* ---------- Piece progress ---------- */
 .piece-progress { display: grid; gap: 6px; margin: 8px 0 4px; }
-.steps { display: flex; gap: 4px; }
+.progress-steps { display: flex; gap: 4px; }
 .step {
   position: relative; flex: 0 0 auto; width: 40px; height: 40px; padding: 0; border: 0; background: none; cursor: pointer;
   display: grid; place-items: center;
@@ -695,3 +694,8 @@ code { font: .85em ui-monospace, "SF Mono", Menlo, monospace; background: var(--
   background: var(--raised); color: var(--ink); border-radius: 999px; box-shadow: var(--shadow-lg); font-weight: 600; font-size: .92rem; white-space: nowrap;
 }
 @media (min-width: 768px) { .toast { bottom: 32px; } }
+
+/* Theme picker in settings (components/ThemePicker.tsx) */
+.theme-seg { justify-self: start; }
+.theme-block { display: grid; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+.theme-block h3 { font-size: 1rem; font-weight: 650; }

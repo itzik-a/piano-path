@@ -43,13 +43,14 @@ Vite + React 19 + TypeScript. Node 22 (`.nvmrc`). On this Mac `npm start` runs `
 - `src/lib/audio.ts`: Web Audio click and chime (the block timer was removed).
 - `src/views/`: Today, Path, Technique, Study, Log. `src/components/`: Metronome, icons, small UI pieces. Routing is the URL hash (`#today`, `#path`, `#technique`, `#study`, `#study/<drill>`, `#log`).
 - Styling: plain CSS in `src/styles.css` with design tokens in `:root`.
+- **Theme**: System / Light / Dark per device (`src/lib/theme.ts`, localStorage "pianoPath.theme", nothing stored = System), chosen in settings (`components/ThemePicker.tsx`). It sets `<html data-theme="light|dark">`; an inline script in `index.html` does it before the first paint. Dark tokens are `:root[data-theme="dark"]`, a dark-only rule is `:where(:root[data-theme="dark"]) .x { … }` (same specificity as `.x`). Never use `@media (prefers-color-scheme: dark)` in CSS.
 - PWA: `public/manifest.webmanifest`, PNG icons in `public/icons/` (iOS needs the 180px PNG as apple-touch-icon), and `public/sw.js` (registered in production only). The service worker caches the page and the files it links on install, uses network first for the page and cache first for hashed assets, and never touches the GitHub API. If you add a file that must work offline and isn't linked from `index.html`, it is cached the first time it loads. On iOS the Home Screen app has its own storage, separate from Safari, so each install connects sync once.
 
 ## Rules for changes
 
 - Design mobile-first (iPhone width ~390px), with tap targets of at least 40px, and check the iPad width too. Below 768px there is a bottom tab bar (five tabs); above it, a top segmented nav.
 - Colours come only from the CSS tokens in `:root`, and both light and dark themes must stay readable.
-- Audio (metronome) starts only from a user tap (iOS requirement).
+- Audio (metronome) starts only from a user tap (iOS requirement). While it plays, the screen is kept on (`useWakeLock` in `src/lib/wakelock.ts`): a locked iPhone throttles the clicks.
 - Run `npm run build` after edits; it must pass with no type errors.
 
 ## Deploy
