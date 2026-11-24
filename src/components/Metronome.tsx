@@ -1,7 +1,7 @@
 /* Floating metronome (keeps the screen on while playing): a round bubble at the bottom left (tempo, pulses on each beat while playing)
-   that opens a panel with play, tempo controls, beats per bar and tap tempo. */
+   that opens a panel with play, tempo controls, beats per bar, tap tempo and the sound (woodblock, beep, wind-up). */
 import { useEffect, useRef, useState } from "react";
-import { click, ensureCtx } from "../lib/audio";
+import { METRO_SOUNDS, ensureCtx, metroTick, type MetroSound } from "../lib/audio";
 import { useWakeLock } from "../lib/wakelock";
 import { IconMetronome, IconMinus, IconPause, IconPlay, IconPlus } from "./Icons";
 import { Seg } from "./ui";
@@ -9,17 +9,23 @@ import { Seg } from "./ui";
 const PREFS = "pianoPath.metronome";
 const clampBpm = (v: number) => Math.max(30, Math.min(220, Math.round(v)));
 
-function loadPrefs(): { bpm: number; beats: number } {
+type Prefs = { bpm: number; beats: number; sound: MetroSound };
+
+function loadPrefs(): Prefs {
   try {
     const p = JSON.parse(localStorage.getItem(PREFS) || "{}");
-    return { bpm: clampBpm(p.bpm || 95), beats: [1, 2, 3, 4].includes(p.beats) ? p.beats : 3 };
+    return {
+      bpm: clampBpm(p.bpm || 95),
+      beats: [1, 2, 3, 4].includes(p.beats) ? p.beats : 3,
+      sound: METRO_SOUNDS.some((o) => o.id === p.sound) ? p.sound : "woodblock",
+    };
   } catch {
-    return { bpm: 95, beats: 3 };
+    return { bpm: 95, beats: 3, sound: "woodblock" };
   }
 }
 
 export function Metronome() {
-  const [{ bpm, beats }, setPrefs] = useState(loadPrefs);
+  const [{ bpm, beats, sound }, setPrefs] = useState(loadPrefs);
   const [on, setOn] = useState(false);
   const [beat, setBeat] = useState(-1);
   const [open, setOpen] = useState(false);
@@ -29,11 +35,12 @@ export function Metronome() {
   const box = useRef<HTMLElement>(null);
 
   // Scheduler state lives in a ref so tempo changes apply without restarting.
-  const r = useRef({ bpm, beats, next: 0, beat: 0, iv: 0 as unknown as ReturnType<typeof setInterval>, taps: [] as number[] });
+  const r = useRef({ bpm, beats, sound, next: 0, beat: 0, iv: 0 as unknown as ReturnType<typeof setInterval>, taps: [] as number[] });
   r.current.bpm = bpm;
   r.current.beats = beats;
+  r.current.sound = sound;
 
-  useEffect(() => { localStorage.setItem(PREFS, JSON.stringify({ bpm, beats })); }, [bpm, beats]);
+  useEffect(() => { localStorage.setItem(PREFS, JSON.stringify({ bpm, beats, sound })); }, [bpm, beats, sound]);
   useEffect(() => () => clearInterval(r.current.iv), []);
 
   // Close the panel on a tap outside it or on Escape (the metronome keeps playing).
@@ -48,6 +55,16 @@ export function Metronome() {
 
   const setBpm = (v: number) => setPrefs((p) => ({ ...p, bpm: clampBpm(v) }));
   const setBeats = (b: number) => { r.current.beat = 0; setPrefs((p) => ({ ...p, beats: b })); };
+  // While playing, the next beat takes the new sound; stopped, a bar's first two beats preview it.
+  const setSound = (v: MetroSound) => {
+    setPrefs((p) => ({ ...p, sound: v }));
+    if (on) return;
+    const c = ensureCtx();
+    if (!c) return;
+    const t = c.currentTime + 0.05;
+    metroTick(c, t, true, v);
+    metroTick(c, t + 0.45, false, v);
+  };
 
   function toggle() {
     const s = r.current;
@@ -64,7 +81,7 @@ export function Metronome() {
     const schedule = () => {
       while (s.next < c.currentTime + 0.12) {
         const b = s.beat, when = s.next;
-        click(c, when, b === 0 && s.beats > 1);
+        metroTick(c, when, b === 0 && s.beats > 1, s.sound);
         setTimeout(() => { setBeat(b); setPulse((n) => n + 1); }, Math.max(0, (when - c.currentTime) * 1000));
         s.beat = (s.beat + 1) % s.beats;
         s.next += 60 / s.bpm;
@@ -119,6 +136,8 @@ export function Metronome() {
             <Seg label="Beats per bar" options={[1, 2, 3, 4]} value={beats} onChange={setBeats} />
             <button type="button" className="btn ghost" onClick={tap}>Tap tempo</button>
           </div>
+          <Seg label="Sound" options={METRO_SOUNDS.map((o) => o.id)} value={sound} onChange={setSound}
+            format={(v) => METRO_SOUNDS.find((o) => o.id === v)?.label ?? v} />
         </div>
       )}
       <button

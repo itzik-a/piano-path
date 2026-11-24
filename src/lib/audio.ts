@@ -51,6 +51,54 @@ export function click(c: AudioContext, t: number, accent: boolean) {
   n.start(t);
 }
 
+/** The metronome's sounds (chosen in its panel; picked by ear on a listening page, 2026-11-24). */
+export type MetroSound = "woodblock" | "beep" | "windup";
+export const METRO_SOUNDS: { id: MetroSound; label: string }[] = [
+  { id: "woodblock", label: "Woodblock" }, { id: "beep", label: "Beep" }, { id: "windup", label: "Wind-up" },
+];
+
+export function metroTick(c: AudioContext, t: number, accent: boolean, sound: MetroSound) {
+  if (sound === "beep") {
+    // a round sine tone, a fifth higher on the first beat
+    tone(c, t, accent ? 1320 : 880, 0.6, accent ? 0.13 : 0.11);
+  } else if (sound === "windup") {
+    // a pendulum metronome's tick, with its bell (C7, plus a soft octave) on the first beat
+    const n = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+    n.buffer = noiseBuffer(c);
+    bp.type = "bandpass"; bp.frequency.value = 3200; bp.Q.value = 3;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.8, t + 0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    n.connect(bp); bp.connect(g); g.connect(c.destination);
+    n.start(t); n.stop(t + 0.05);
+    tone(c, t, 1250, 0.25, 0.035);
+    if (accent) { tone(c, t + 0.004, 2093, 0.35, 0.24); tone(c, t + 0.004, 4186, 0.08, 0.12); }
+  } else {
+    click(c, t, accent);
+  }
+}
+
+/** A sine with a 2 ms attack and an exponential decay to silence over `dur` seconds. */
+function tone(c: AudioContext, t: number, f: number, peak: number, dur: number) {
+  const o = c.createOscillator(), g = c.createGain();
+  o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+let longNoise: AudioBuffer | null = null;
+function noiseBuffer(c: AudioContext) {
+  if (!longNoise) {
+    longNoise = c.createBuffer(1, Math.round(c.sampleRate * 0.05), c.sampleRate);
+    const d = longNoise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return longNoise;
+}
+
 export function chime() {
   const c = ensureCtx();
   if (!c) return;

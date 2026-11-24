@@ -481,6 +481,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 .metro-bpm output { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; line-height: 1; }
 .metro-bpm span { color: var(--muted); font-size: .85rem; }
 .metro-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.metro-panel > .seg { display: flex; } /* the sound choice: three equal buttons across the panel */
+.metro-panel > .seg button { flex: 1; }
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 
 /* ---------- Sync sheet ---------- */
