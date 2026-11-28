@@ -70,6 +70,20 @@
   color-scheme: dark;
 }
 
+/* Bear: <html data-style="bear"> (src/lib/theme.ts), Bear's greys and text (as in Knowledge Path's Graphite: light from
+   bear.app's CSS and its Mac screenshot, dark from Bear's dark theme) with this app's accent kept.
+   Contrast is Bear's: #888 muted is 3.5:1 on white. */
+:root[data-style="bear"] {
+  --bg: #F3F5F7; --surface: #FFFFFF; --surface-2: #E4E5E6; --raised: #FFFFFF; --ink: #444444; --muted: #888888;
+  --line: #E2E6E9; --track: #E4E5E6; --toast-bg: #2E3235; --toast-ink: #FFFFFF;
+  --glass: rgba(255, 255, 255, .76); --glass-line: rgba(68, 68, 68, .06); --grid: #E4E5E6; --axis: #D9D9D9;
+}
+:root[data-style="bear"][data-theme="dark"] {
+  --bg: #1F2022; --surface: #232325; --surface-2: #2F3032; --raised: #535355; --ink: #BCC0C3; --muted: #8A8B8D;
+  --line: #393A3C; --track: #2F3032; --toast-bg: #E2E2E4; --toast-ink: #1F2022;
+  --glass: rgba(31, 32, 34, .76); --glass-line: rgba(255, 255, 255, .06); --grid: #2C2D2F; --axis: #393A3C;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 html, body { margin: 0; }
